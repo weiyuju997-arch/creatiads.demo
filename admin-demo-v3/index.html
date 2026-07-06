@@ -1,0 +1,891 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin 后台 v3 - CreatiAds</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <div class="logo">CreatiAds Admin</div>
+            <div class="context-switcher">
+                <span class="context-label">当前组织：</span>
+                <select id="orgSelector" onchange="switchOrg(this.value)">
+                    <!-- 动态渲染 -->
+                </select>
+            </div>
+        </div>
+        <div class="top-bar-right">
+            <button class="btn btn-ghost btn-sm" onclick="openPermissionPreview()" title="模拟其他用户的视角，查看其能访问的资源">
+                🔍 权限预览
+            </button>
+            <select id="userSwitcher" onchange="switchUser(this.value)" title="演示用：切换当前登录用户">
+                <!-- 动态渲染 -->
+            </select>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- 左侧菜单 -->
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-page="members" onclick="navigateTo('members')">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </span>
+                    <span class="nav-text">成员管理</span>
+                </a>
+                <a href="#" class="nav-item" data-page="workspaces" onclick="navigateTo('workspaces')">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    </span>
+                    <span class="nav-text">空间管理</span>
+                </a>
+                <a href="#" class="nav-item" data-page="billing" onclick="navigateTo('billing')">
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    </span>
+                    <span class="nav-text">订阅与计费</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 右侧内容区 -->
+        <main class="content-area">
+            <!-- ===== 成员管理页 ===== -->
+            <div id="membersPage" class="page-content active">
+                <div class="page-header">
+                    <div>
+                        <h1>成员管理</h1>
+                        <p class="page-desc">管理组织成员及其权限</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-ghost" id="batchActionBtn" onclick="toggleBatchMode()">批量操作</button>
+                        <button class="btn btn-primary" onclick="openInviteMember()">邀请成员</button>
+                    </div>
+                </div>
+
+                <!-- 企业角色权限说明（一行摘要，点击展开详情） -->
+                <div class="role-permission-summary" onclick="toggleRolePermissionHint()" style="cursor:pointer;">
+                    <span class="role-permission-summary-text">
+                        <span class="perm-dot"></span>
+                        Admin 拥有全部权限；Member 需加入空间才能操作数据，可通过空间角色精细控制
+                    </span>
+                    <span class="role-permission-toggle" id="rolePermissionToggle">展开详情 ▾</span>
+                </div>
+                <div class="role-permission-hint" id="rolePermissionHint" style="display:none;">
+                    <div class="role-permission-hint-header">
+                        <h4>企业角色权限说明</h4>
+                        <button class="btn-link" onclick="toggleRolePermissionHint()">收起 ×</button>
+                    </div>
+                    <table class="role-permission-table">
+                        <thead>
+                            <tr>
+                                <th>权限项</th>
+                                <th class="text-center"><span class="role-badge admin">👑 Admin</span></th>
+                                <th class="text-center"><span class="role-badge member">👤 Member</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>邀请/移除成员</td>
+                                <td class="text-center"><span class="perm-yes">✓</span></td>
+                                <td class="text-center"><span class="perm-no">—</span></td>
+                            </tr>
+                            <tr>
+                                <td>修改他人企业角色</td>
+                                <td class="text-center"><span class="perm-yes">✓</span></td>
+                                <td class="text-center"><span class="perm-no">—</span></td>
+                            </tr>
+                            <tr>
+                                <td>禁用/启用账号</td>
+                                <td class="text-center"><span class="perm-yes">✓</span></td>
+                                <td class="text-center"><span class="perm-no">—</span></td>
+                            </tr>
+                            <tr>
+                                <td>管理订阅与计费</td>
+                                <td class="text-center"><span class="perm-yes">✓</span></td>
+                                <td class="text-center"><span class="perm-no">—</span></td>
+                            </tr>
+                            <tr>
+                                <td>创建空间</td>
+                                <td class="text-center"><span class="perm-yes">✓</span></td>
+                                <td class="text-center"><span class="perm-yes">✓</span></td>
+                            </tr>
+                            <tr>
+                                <td>查看所有空间</td>
+                                <td class="text-center"><span class="perm-yes">✓</span></td>
+                                <td class="text-center"><span class="perm-conditional">仅加入的</span></td>
+                            </tr>
+                            <tr>
+                                <td>加入任意空间</td>
+                                <td class="text-center"><span class="perm-yes">✓（强制加入）</span></td>
+                                <td class="text-center"><span class="perm-conditional">需邀请</span></td>
+                            </tr>
+                            <tr>
+                                <td>删除任意空间</td>
+                                <td class="text-center"><span class="perm-yes">✓</span></td>
+                                <td class="text-center"><span class="perm-conditional">仅自己 Owner 的</span></td>
+                            </tr>
+                            <tr>
+                                <td>查看企业全部数据源</td>
+                                <td class="text-center"><span class="perm-yes">✓</span></td>
+                                <td class="text-center"><span class="perm-conditional">仅空间内</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="info-banner">
+                    <strong>💡 权限说明：</strong>
+                    企业 <span class="role-badge admin">Admin</span> 可管理组织、邀请成员、强制加入任意空间；
+                    <span class="role-badge member">Member</span> 只能访问被邀请的空间
+                </div>
+
+                <!-- 批量操作工具栏（默认隐藏） -->
+                <div class="batch-toolbar" id="batchToolbar" style="display:none;">
+                    <span class="batch-info">已选 <strong id="batchSelectedCount">0</strong> 名成员</span>
+                    <div class="batch-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="batchChangeOrgRole('Admin')">批量设为 Admin</button>
+                        <button class="btn btn-ghost btn-sm" onclick="batchChangeOrgRole('Member')">批量设为 Member</button>
+                        <button class="btn btn-ghost btn-sm" onclick="openBatchAddToWorkspace()">批量加入空间</button>
+                        <button class="btn btn-danger btn-sm" onclick="batchRemoveMembers()">批量移除</button>
+                        <button class="btn btn-ghost btn-sm" onclick="toggleBatchMode()">取消</button>
+                    </div>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="batch-col" style="display:none;width:40px;">
+                                <input type="checkbox" id="selectAllMembers" onchange="toggleSelectAllMembers()">
+                            </th>
+                            <th style="width:120px;">姓名</th>
+                            <th style="width:200px;">邮箱</th>
+                            <th style="width:100px;">企业角色</th>
+                            <th>加入的空间</th>
+                            <th style="width:120px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="memberTableBody">
+                        <!-- 动态渲染 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===== 空间管理页 ===== -->
+            <div id="workspacesPage" class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1>空间管理</h1>
+                        <p class="page-desc">协作空间是数据源、看板、成员的容器。点击进入可配置空间角色</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openCreateWorkspace()">+ 创建空间</button>
+                </div>
+
+                <div class="workspace-grid" id="workspaceGrid">
+                    <!-- 动态渲染 -->
+                </div>
+            </div>
+
+            <!-- ===== 订阅与计费页 ===== -->
+            <div id="billingPage" class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1>订阅与计费</h1>
+                        <p class="page-desc">套餐、席位和账单管理</p>
+                    </div>
+                </div>
+
+                <!-- 当前套餐卡片 -->
+                <div class="billing-plan-card" id="billingPlanCard">
+                    <!-- 动态渲染 -->
+                </div>
+
+                <!-- 用量统计 -->
+                <div class="billing-card">
+                    <h3 class="section-title">用量统计</h3>
+                    <div class="billing-usage-grid" id="billingUsageGrid">
+                        <!-- 动态渲染 -->
+                    </div>
+                </div>
+
+                <!-- 套餐对比 -->
+                <div class="billing-card">
+                    <h3 class="section-title">套餐对比</h3>
+                    <div class="plan-comparison" id="planComparison">
+                        <!-- 动态渲染 -->
+                    </div>
+                </div>
+
+                <!-- 账单历史 -->
+                <div class="billing-section">
+                    <h3 class="section-title">账单历史</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>账期</th>
+                                <th>金额</th>
+                                <th>支付方式</th>
+                                <th>状态</th>
+                                <th style="width:100px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billingTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ===== 邀请成员抽屉 ===== -->
+    <div class="modal-overlay drawer-overlay" id="inviteModal" style="display:none;">
+        <div class="modal drawer">
+            <div class="modal-header">
+                <div>
+                    <h3>邀请成员</h3>
+                    <p class="modal-subtitle">支持单个邀请或批量邀请（每行一个邮箱）</p>
+                </div>
+                <button class="modal-close" onclick="closeInviteMember()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>邮箱 <span class="required">*</span></label>
+                    <textarea class="form-input" id="inviteEmail" rows="3" placeholder="member@example.com&#10;支持多个邮箱，每行一个"></textarea>
+                    <div class="form-hint">单个邀请填一个邮箱；批量邀请每行一个邮箱</div>
+                </div>
+                <div class="form-group">
+                    <label>企业角色 <span class="required">*</span></label>
+                    <select class="form-input" id="inviteOrgRole">
+                        <option value="Member">Member（成员）</option>
+                        <option value="Admin">Admin（管理员）</option>
+                    </select>
+                    <div class="form-hint">Admin 可管理组织和所有空间，Member 仅能访问被邀请的空间</div>
+                </div>
+                <div class="form-group">
+                    <label>加入的空间</label>
+                    <div class="checkbox-list" id="inviteWorkspaceList">
+                        <!-- 动态渲染 -->
+                    </div>
+                    <div class="form-hint">可不选；后续可在编辑成员处调整</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeInviteMember()">取消</button>
+                <button class="btn btn-primary" onclick="confirmInviteMember()">发送邀请</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 编辑成员抽屉 ===== -->
+    <div class="modal-overlay drawer-overlay" id="editMemberModal" style="display:none;">
+        <div class="modal drawer">
+            <div class="modal-header">
+                <h3>编辑成员</h3>
+                <button class="modal-close" onclick="closeEditMember()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>姓名</label>
+                    <input type="text" class="form-input" id="editMemberName" disabled>
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" class="form-input" id="editMemberEmail" disabled>
+                </div>
+                <div class="form-group">
+                    <label>企业角色 <span class="required">*</span></label>
+                    <select class="form-input" id="editOrgRole">
+                        <option value="Member">Member（成员）</option>
+                        <option value="Admin">Admin（管理员）</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>加入的空间及角色</label>
+                    <div class="workspace-role-list" id="editWorkspaceRoleList">
+                        <!-- 动态渲染 -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeEditMember()">取消</button>
+                <button class="btn btn-primary" onclick="confirmEditMember()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 空间详情抽屉 ===== -->
+    <div class="modal-overlay drawer-overlay" id="workspaceDetailModal" style="display:none;">
+        <div class="modal drawer drawer-wide">
+            <div class="modal-header">
+                <div>
+                    <h3 id="wsDetailTitle">空间详情</h3>
+                    <p class="modal-subtitle" id="wsDetailSubtitle"></p>
+                </div>
+                <button class="modal-close" onclick="closeWorkspaceDetail()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-bar">
+                    <button class="tab-btn active" data-tab="info" onclick="switchWsDetailTab('info')">基本信息</button>
+                    <button class="tab-btn" data-tab="members" onclick="switchWsDetailTab('members')">成员管理</button>
+                    <button class="tab-btn" data-tab="datasources" onclick="switchWsDetailTab('datasources')">数据源</button>
+                    <button class="tab-btn" data-tab="resources" onclick="switchWsDetailTab('resources')">报表</button>
+                    <button class="tab-btn" data-tab="datapermissions" onclick="switchWsDetailTab('datapermissions')">数据权限</button>
+                    <button class="tab-btn" data-tab="settings" onclick="switchWsDetailTab('settings')">空间设置</button>
+                </div>
+
+                <!-- 基本信息 Tab -->
+                <div class="tab-content active" id="wsDetailInfoTab">
+                    <div class="form-group">
+                        <label>空间图标</label>
+                        <div class="ws-icon-upload">
+                            <div class="ws-icon-preview" id="wsDetailIconPreview">
+                                <span id="wsDetailIconText">空</span>
+                            </div>
+                            <div class="ws-icon-upload-info">
+                                <div style="font-size:13px;color:#374151;margin-bottom:4px;">默认使用空间名称首字</div>
+                                <input type="file" id="wsDetailIconFile" accept="image/*" onchange="handleWsDetailIconUpload(this)" style="display:none;">
+                                <button class="btn btn-ghost btn-sm" id="btnUploadDetailIcon" onclick="document.getElementById('wsDetailIconFile').click()">上传自定义图标</button>
+                                <button class="btn btn-ghost btn-sm" id="btnResetDetailIcon" style="display:none;" onclick="resetWsDetailIcon()">恢复默认</button>
+                            </div>
+                        </div>
+                        <div class="form-hint">建议上传正方形图片，支持 JPG、PNG，最大 2MB</div>
+                    </div>
+                    <div class="form-group">
+                        <label>空间名称 <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="wsDetailName" onkeyup="updateWsDetailIconPreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>空间描述</label>
+                        <textarea class="form-input" id="wsDetailDesc" rows="3" placeholder="描述这个空间的用途"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Owner</label>
+                        <select class="form-input" id="wsDetailOwner">
+                            <!-- 动态渲染 -->
+                        </select>
+                        <div class="form-hint">空间 Owner 拥有最高管理权限。仅当前 Owner 或企业 Admin 可转让</div>
+                    </div>
+                    <div class="form-group" id="wsDetailDangerZone">
+                        <div class="danger-actions">
+                            <button class="btn btn-danger btn-sm" onclick="deleteWorkspaceFromDetail()">删除空间</button>
+                        </div>
+                        <div class="form-hint">删除后空间内所有数据将永久丢失，无法恢复</div>
+                    </div>
+                </div>
+
+                <!-- 成员管理 Tab -->
+                <div class="tab-content" id="wsDetailMembersTab" style="display:none;">
+                    <!-- 空间角色权限说明（一行摘要，点击展开详情） -->
+                    <div class="role-permission-summary" onclick="toggleWsRolePermissionHint()" style="cursor:pointer;">
+                        <span class="role-permission-summary-text">
+                            <span class="perm-dot"></span>
+                            Owner 拥有空间最高权限；Editor 可创建/编辑数据；Viewer 默认无权限，被分享资源后自动加入空间，仅能查看被分享的内容
+                        </span>
+                        <span class="role-permission-toggle" id="wsRolePermissionToggle">展开详情 ▾</span>
+                    </div>
+                    <div class="role-permission-hint" id="wsRolePermissionHint" style="display:none;">
+                        <div class="role-permission-hint-header">
+                            <h4>空间角色权限说明</h4>
+                            <button class="btn-link" onclick="toggleWsRolePermissionHint()">收起 ×</button>
+                        </div>
+                        <table class="role-permission-table">
+                            <thead>
+                                <tr>
+                                    <th>权限项</th>
+                                    <th class="text-center"><span class="role-badge owner">👑 Owner</span></th>
+                                    <th class="text-center"><span class="role-badge editor">✏️ Editor</span></th>
+                                    <th class="text-center"><span class="role-badge viewer">👁 Viewer</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>邀请/移出空间成员</td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-no">—</span></td>
+                                    <td class="text-center"><span class="perm-no">—</span></td>
+                                </tr>
+                                <tr>
+                                    <td>修改空间设置</td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-no">—</span></td>
+                                    <td class="text-center"><span class="perm-no">—</span></td>
+                                </tr>
+                                <tr>
+                                    <td>删除空间</td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-no">—</span></td>
+                                    <td class="text-center"><span class="perm-no">—</span></td>
+                                </tr>
+                                <tr>
+                                    <td>转让 Owner 身份</td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-no">—</span></td>
+                                    <td class="text-center"><span class="perm-no">—</span></td>
+                                </tr>
+                                <tr>
+                                    <td>添加/删除数据源</td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-no">—</span></td>
+                                </tr>
+                                <tr>
+                                    <td>使用数据源做分析</td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-conditional">仅被分享时</span></td>
+                                </tr>
+                                <tr>
+                                    <td>创建/编辑看板</td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-conditional">仅被分享时</span></td>
+                                </tr>
+                                <tr>
+                                    <td>查看空间内看板</td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-conditional">仅被分享时</span></td>
+                                </tr>
+                                <tr>
+                                    <td>查看分享给自己的资源</td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                </tr>
+                                <tr>
+                                    <td>在空间内使用 AI</td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-yes">✓</span></td>
+                                    <td class="text-center"><span class="perm-conditional">仅问答</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ws-members-header">
+                        <span class="ws-members-count" id="wsMembersCount"></span>
+                        <div class="page-actions">
+                            <button class="btn btn-ghost btn-sm" onclick="openBatchAddMembersToWs()">批量添加</button>
+                            <button class="btn btn-primary btn-sm" onclick="openAddMemberToWs()">+ 添加成员</button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>姓名</th>
+                                <th>邮箱</th>
+                                <th style="width:100px;">企业角色</th>
+                                <th style="width:140px;">空间角色</th>
+                                <th style="width:80px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wsMembersTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- 数据源 Tab -->
+                <div class="tab-content" id="wsDetailDatasourcesTab" style="display:none;">
+                    <div class="tab-content-header">
+                        <span class="tab-content-desc" id="wsDatasourceDesc"></span>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>连接器名称</th>
+                                <th>连接器类型</th>
+                                <th>状态</th>
+                                <th style="width:80px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wsDatasourcesTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- 报表 Tab -->
+                <div class="tab-content" id="wsDetailResourcesTab" style="display:none;">
+                    <div class="tab-content-header">
+                        <span class="tab-content-desc">空间内的看板和分析，可批量转移所有权</span>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>名称</th>
+                                <th>创建者</th>
+                                <th style="width:80px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wsResourcesTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- 数据权限 Tab -->
+                <div class="tab-content" id="wsDetailDataPermissionsTab" style="display:none;">
+
+                    <!-- 成员权限表 -->
+                    <div class="dp-section-title">
+                        <div>
+                            <div class="dp-section-h">成员数据权限</div>
+                            <div class="dp-section-sub" id="wsMemberPermDesc"></div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" id="btnBulkGrant" onclick="openBulkGrantModal()" style="display:none;">批量授权</button>
+                    </div>
+
+                    <table class="data-table dp-member-perm-table">
+                        <thead>
+                            <tr>
+                                <th style="width:26%;">成员</th>
+                                <th style="width:90px;">空间角色</th>
+                                <th style="width:190px;">数据权限档位</th>
+                                <th>可见账户</th>
+                                <th style="width:100px; white-space:nowrap;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wsMemberPermTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- 追加账户勾选面板 -->
+                <div class="modal-overlay" id="extraGrantModal" style="display:none;" onclick="if(event.target===this) closeExtraGrantModal()">
+                    <div class="modal" style="max-width: 620px;">
+                        <div class="modal-header">
+                            <div>
+                                <h3>追加账户授权</h3>
+                                <p class="modal-subtitle" id="extraGrantSubtitle"></p>
+                            </div>
+                            <button class="modal-close" onclick="closeExtraGrantModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-hint" style="margin-bottom: 10px;">
+                                除了 TA 自己授权的账户，还额外允许 TA 看到下面勾选的账户：
+                            </div>
+
+                            <!-- 搜索框 -->
+                            <div class="dp-search-box">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                <input type="text" id="extraGrantSearch" placeholder="搜索账户名 或 广告主（多个用空格/逗号分隔）..." oninput="renderExtraGrantList()">
+                            </div>
+
+                            <!-- 批量操作栏 -->
+                            <div class="dp-batch-bar">
+                                <span class="dp-batch-info" id="extraGrantBatchInfo">已选 0 / 0</span>
+                                <div class="dp-batch-actions">
+                                    <button class="btn-link" onclick="extraGrantSelectAll(true)">全选可见</button>
+                                    <button class="btn-link" onclick="extraGrantSelectAll(false)">全部取消</button>
+                                </div>
+                            </div>
+
+                            <div id="extraGrantAccountList" class="dp-extra-list"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-ghost" onclick="closeExtraGrantModal()">取消</button>
+                            <button class="btn btn-primary" onclick="saveExtraGrant()">保存</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 批量授权面板：多账户 × 多成员 -->
+                <div class="modal-overlay" id="bulkGrantModal" style="display:none;" onclick="if(event.target===this) closeBulkGrantModal()">
+                    <div class="modal" style="max-width: 900px;">
+                        <div class="modal-header">
+                            <div>
+                                <h3>批量授权账户</h3>
+                                <p class="modal-subtitle">选择账户 + 选择成员，一次把所选账户开放给所有所选成员</p>
+                            </div>
+                            <button class="modal-close" onclick="closeBulkGrantModal()">&times;</button>
+                        </div>
+                        <div class="modal-body" style="padding: 16px 20px;">
+                            <div class="dp-bulk-grid">
+                                <!-- 左：账户 -->
+                                <div class="dp-bulk-col">
+                                    <div class="dp-bulk-col-head">
+                                        <span class="dp-bulk-col-title">1. 选择广告账户</span>
+                                        <span class="dp-bulk-col-count" id="bulkAccCount">0 / 0</span>
+                                    </div>
+                                    <div class="dp-search-box">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                        <input type="text" id="bulkAccSearch" placeholder="账户名 / 授权人（多个用空格分隔）" oninput="renderBulkAccList()">
+                                    </div>
+                                    <div class="dp-bulk-actions">
+                                        <button class="btn-link" onclick="bulkSelectAllAccounts(true)">全选可见</button>
+                                        <button class="btn-link" onclick="bulkSelectAllAccounts(false)">全部取消</button>
+                                    </div>
+                                    <div id="bulkAccList" class="dp-bulk-list"></div>
+                                </div>
+
+                                <!-- 右：成员 -->
+                                <div class="dp-bulk-col">
+                                    <div class="dp-bulk-col-head">
+                                        <span class="dp-bulk-col-title">2. 选择成员</span>
+                                        <span class="dp-bulk-col-count" id="bulkMemberCount">0 / 0</span>
+                                    </div>
+                                    <div class="dp-search-box">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                        <input type="text" id="bulkMemberSearch" placeholder="姓名 / 邮箱（多个用空格分隔）" oninput="renderBulkMemberList()">
+                                    </div>
+                                    <div class="dp-bulk-actions">
+                                        <button class="btn-link" onclick="bulkSelectAllMembers(true)">全选可见</button>
+                                        <button class="btn-link" onclick="bulkSelectAllMembers(false)">全部取消</button>
+                                    </div>
+                                    <div id="bulkMemberList" class="dp-bulk-list"></div>
+                                </div>
+                            </div>
+
+                            <div class="dp-bulk-preview" id="bulkPreview"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-ghost" onclick="closeBulkGrantModal()">取消</button>
+                            <button class="btn btn-primary" onclick="saveBulkGrant()">追加授权</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 空间设置 Tab -->
+                <div class="tab-content" id="wsDetailSettingsTab" style="display:none;">
+                    <div class="settings-section">
+                        <h4 class="settings-section-title">默认权限</h4>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-label">新成员默认空间角色</div>
+                                <div class="settings-item-desc">邀请加入空间时的默认角色</div>
+                            </div>
+                            <select class="settings-select" id="wsSettingDefaultRole">
+                                <option value="Owner">Owner</option>
+                                <option value="Editor">Editor (推荐)</option>
+                                <option value="Viewer">Viewer</option>
+                            </select>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-label">数据源对空间可见</div>
+                                <div class="settings-item-desc">新增数据源默认共享给所有空间成员</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="wsSettingDatasourceVisible">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-label">允许成员邀请他人</div>
+                                <div class="settings-item-desc">关闭后仅 Owner 可邀请</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="wsSettingAllowInvite">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4 class="settings-section-title">分享设置</h4>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-label">允许外部链接分享</div>
+                                <div class="settings-item-desc">本空间内容可对外生成分享链接</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="wsSettingExternalShare">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                        <button class="btn btn-primary btn-sm" onclick="saveWsSettings()">保存设置</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeWorkspaceDetail()">关闭</button>
+                <button class="btn btn-primary" id="btnSaveWsInfo" onclick="saveWorkspaceInfo()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 添加成员到空间弹窗 ===== -->
+    <div class="modal-overlay" id="addMemberToWsModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>添加成员到空间</h3>
+                <button class="modal-close" onclick="closeAddMemberToWs()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>选择成员 <span class="required">*</span></label>
+                    <select class="form-input" id="addMemberToWsUserSelect">
+                        <!-- 动态渲染 -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>空间角色 <span class="required">*</span></label>
+                    <select class="form-input" id="addMemberToWsRole">
+                        <option value="Editor">Editor</option>
+                        <option value="Owner">Owner</option>
+                        <option value="Viewer">Viewer</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeAddMemberToWs()">取消</button>
+                <button class="btn btn-primary" onclick="confirmAddMemberToWs()">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 批量添加成员到当前空间弹窗（空间详情页用） ===== -->
+    <div class="modal-overlay" id="batchAddMembersToWsModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>批量添加成员到空间</h3>
+                <button class="modal-close" onclick="closeBatchAddMembersToWs()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>邮箱 <span class="required">*</span></label>
+                    <textarea class="form-input" id="batchAddMembersEmails" rows="4" placeholder="member@example.com&#10;支持多个邮箱，每行一个"></textarea>
+                    <div class="form-hint">单个邀请填一个邮箱；批量邀请每行一个邮箱</div>
+                </div>
+                <div class="form-group">
+                    <label>空间角色 <span class="required">*</span></label>
+                    <select class="form-input" id="batchAddMembersRole">
+                        <option value="Editor">Editor</option>
+                        <option value="Viewer">Viewer</option>
+                        <option value="Owner">Owner</option>
+                    </select>
+                    <div class="form-hint">所有填入的成员将以此角色加入该空间</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeBatchAddMembersToWs()">取消</button>
+                <button class="btn btn-primary" onclick="confirmBatchAddMembersToWs()">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 创建空间弹窗 ===== -->
+    <div class="modal-overlay" id="createWsModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>创建空间</h3>
+                <button class="modal-close" onclick="closeCreateWorkspace()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>空间名称 <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="createWsName" placeholder="如：客户A项目" onkeyup="updateWsIconPreview()">
+                </div>
+                <div class="form-group">
+                    <label>空间描述</label>
+                    <textarea class="form-input" id="createWsDesc" rows="2" placeholder="描述这个空间的用途"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>空间图标</label>
+                    <div class="ws-icon-upload">
+                        <div class="ws-icon-preview" id="createWsIconPreview">
+                            <span id="createWsIconText">空</span>
+                        </div>
+                        <div class="ws-icon-upload-info">
+                            <div style="font-size:13px;color:#374151;margin-bottom:4px;">默认使用空间名称首字</div>
+                            <input type="file" id="createWsIconFile" accept="image/*" onchange="handleWsIconUpload(this)" style="display:none;">
+                            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('createWsIconFile').click()">上传自定义图标</button>
+                            <button class="btn btn-ghost btn-sm" id="btnResetCreateIcon" style="display:none;" onclick="resetCreateWsIcon()">恢复默认</button>
+                        </div>
+                    </div>
+                    <div class="form-hint">建议上传正方形图片，支持 JPG、PNG，最大 2MB</div>
+                </div>
+                <div class="info-banner small">
+                    创建后您将自动成为该空间的 Owner
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeCreateWorkspace()">取消</button>
+                <button class="btn btn-primary" onclick="confirmCreateWorkspace()">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 批量加入空间弹窗（成员管理页用） ===== -->
+    <div class="modal-overlay" id="batchAddWsModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>批量加入空间</h3>
+                <button class="modal-close" onclick="closeBatchAddToWorkspace()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="info-banner small">
+                    将选中的 <strong id="batchAddWsCount"></strong> 名成员批量加入空间
+                </div>
+                <div class="form-group">
+                    <label>选择空间 <span class="required">*</span></label>
+                    <select class="form-input" id="batchAddWsSelect">
+                        <!-- 动态渲染 -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>空间角色 <span class="required">*</span></label>
+                    <select class="form-input" id="batchAddWsRole">
+                        <option value="Editor">Editor</option>
+                        <option value="Viewer">Viewer</option>
+                        <option value="Owner">Owner</option>
+                    </select>
+                    <div class="form-hint">所有选中的成员将以此角色加入该空间</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeBatchAddToWorkspace()">取消</button>
+                <button class="btn btn-primary" onclick="confirmBatchAddToWorkspace()">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 升级套餐弹窗 ===== -->
+    <div class="modal-overlay drawer-overlay" id="upgradeModal" style="display:none;">
+        <div class="modal drawer">
+            <div class="modal-header">
+                <h3 id="upgradeModalTitle">升级套餐</h3>
+                <button class="modal-close" onclick="closeUpgradeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="upgradeModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeUpgradeModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmUpgrade()">确认支付</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 权限预览抽屉 ===== -->
+    <div class="modal-overlay drawer-overlay" id="permissionPreviewModal" style="display:none;">
+        <div class="modal drawer drawer-wide">
+            <div class="modal-header">
+                <div>
+                    <h3>权限预览</h3>
+                    <p class="modal-subtitle">模拟某个用户的视角，查看其在组织中拥有的权限</p>
+                </div>
+                <button class="modal-close" onclick="closePermissionPreview()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>选择要预览的用户</label>
+                    <select class="form-input" id="previewUserSelect" onchange="renderPermissionPreview()">
+                        <!-- 动态渲染 -->
+                    </select>
+                </div>
+
+                <div id="previewContent">
+                    <!-- 动态渲染 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closePermissionPreview()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
