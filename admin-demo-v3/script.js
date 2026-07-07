@@ -65,7 +65,7 @@ function getOrgWorkspaces(orgId) {
 function getWorkspaceMembers(wsId) {
     return USER_WORKSPACE_ROLES
         .filter(r => r.workspaceId === wsId)
-        .map(r => ({ ...getUser(r.userId), wsRole: r.wsRole }));
+        .map(r => ({ ...getUser(r.userId), wsRole: r.wsRole, wsEditPerm: r.wsEditPerm || 'edit' }));
 }
 
 /* ============================================ */
@@ -900,7 +900,6 @@ function renderWsDetailMembers(wsId) {
     
     tbody.innerHTML = members.map(m => {
         const orgRole = getUserOrgRole(m.id, CURRENT_CONTEXT.orgId);
-        // 非管理员/Owner 且开启允许成员邀请时，固定显示 Viewer，不可编辑
         const canEditRole = canManage;
         const canRemove = canManage && m.id !== CURRENT_USER_ID;
         return `
@@ -908,21 +907,81 @@ function renderWsDetailMembers(wsId) {
                 <td>${m.name}</td>
                 <td>${m.email}</td>
                 <td><span class="role-badge ${orgRole?.toLowerCase()}">${orgRole || '-'}</span></td>
-                <td>
-                    ${canEditRole ? `
-                        <select onchange="changeWsMemberRole(${m.id}, this.value)">
-                            <option value="Owner" ${m.wsRole === 'Owner' ? 'selected' : ''}>Owner</option>
-                            <option value="Editor" ${m.wsRole === 'Editor' ? 'selected' : ''}>Editor</option>
-                            <option value="Viewer" ${m.wsRole === 'Viewer' ? 'selected' : ''}>Viewer</option>
-                        </select>
-                    ` : `<span class="role-badge viewer">Viewer</span>`}
-                </td>
+                <td>${renderWsRoleCell(m, orgRole, canEditRole)}</td>
+                <td>${renderWsPermCell(m, orgRole, canEditRole)}</td>
                 <td>
                     ${canRemove ? `<button class="btn-link btn-link-danger" onclick="removeWsMember(${m.id})">移除</button>` : ''}
                 </td>
             </tr>
         `;
     }).join('');
+}
+
+/**
+ * 空间角色列 —— Owner / Editor / Viewer 三选一
+ * 规则：企业 Admin 强制 Owner，不可改
+ */
+function renderWsRoleCell(m, orgRole, canEditRole) {
+    const isOrgAdmin = orgRole === 'Admin';
+
+    // 企业 Admin：永远 Owner，锁定
+    if (isOrgAdmin) {
+        return '<span class="role-badge owner">Owner</span>';
+    }
+
+    if (!canEditRole) {
+        return '<span class="role-badge ' + (m.wsRole || '').toLowerCase() + '">' + (m.wsRole || '-') + '</span>';
+    }
+
+    return '<select class="ws-role-select" onchange="setWsRolePreset(' + m.id + ', this.value)">' +
+        '<option value="Owner" '  + (m.wsRole === 'Owner'  ? 'selected' : '') + '>Owner</option>' +
+        '<option value="Editor" ' + (m.wsRole === 'Editor' ? 'selected' : '') + '>Editor</option>' +
+        '<option value="Viewer" ' + (m.wsRole === 'Viewer' ? 'selected' : '') + '>Viewer</option>' +
+    '</select>';
+}
+
+/**
+ * 权限列
+ *   Owner  → "全部权限"（锁死）
+ *   Editor → "可编辑 / 可查看" 下拉，控制该 Editor 对空间内资源的默认操作能力
+ *   Viewer → "仅分享的资源"（不可选；分享时逐个决定编辑/查看）
+ */
+function renderWsPermCell(m, orgRole, canEditRole) {
+    const isOrgAdmin = orgRole === 'Admin';
+    const wsRole = m.wsRole;
+
+    if (wsRole === 'Owner') {
+        return '<span class="ws-perm-locked" title="' + (isOrgAdmin ? '企业 Admin 强制拥有全部权限' : 'Owner 拥有全部权限') + '">全部权限</span>';
+    }
+
+    if (wsRole === 'Viewer') {
+        return '<span class="ws-perm-readonly ws-perm-viewer-hint" title="Viewer 默认无空间级权限，仅能查看被逐个分享的资源">仅分享的资源</span>';
+    }
+
+    // Editor
+    if (!canEditRole) {
+        return '<span class="ws-perm-readonly">' + (m.wsEditPerm === 'view' ? '可查看' : '可编辑') + '</span>';
+    }
+
+    const perm = m.wsEditPerm || 'edit';
+    return '<select class="ws-perm-select" onchange="setEditorPerm(' + m.id + ', this.value)">' +
+        '<option value="edit" ' + (perm === 'edit' ? 'selected' : '') + '>可编辑</option>' +
+        '<option value="view" ' + (perm === 'view' ? 'selected' : '') + '>可查看</option>' +
+    '</select>';
+}
+
+/** 修改 Editor 的编辑权限档位（edit / view）*/
+function setEditorPerm(userId, perm) {
+    const rel = USER_WORKSPACE_ROLES.find(r => r.userId === userId && r.workspaceId === viewingWorkspaceId);
+    if (rel) rel.wsEditPerm = perm;
+    renderWsDetailMembers(viewingWorkspaceId);
+}
+
+/** 统一入口：设置某成员在当前空间的角色（Owner / Editor / Viewer）*/
+function setWsRolePreset(userId, newRole) {
+    const rel = USER_WORKSPACE_ROLES.find(r => r.userId === userId && r.workspaceId === viewingWorkspaceId);
+    if (rel) rel.wsRole = newRole;
+    renderWsDetailMembers(viewingWorkspaceId);
 }
 
 function changeWsMemberRole(userId, newRole) {

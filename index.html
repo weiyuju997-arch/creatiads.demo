@@ -60,6 +60,32 @@
                     <span>Creation</span>
                 </a>
             </nav>
+
+            <!-- 组织切换（底部） -->
+            <div class="org-switcher" id="orgSwitcher">
+                <button class="nav-item org-switcher-btn" id="btnOrgSwitcher" title="切换组织">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span>组织</span>
+                </button>
+                <div class="org-popover" id="orgPopover">
+                    <div class="org-popover-header">
+                        <span>切换组织</span>
+                        <span class="org-popover-hint">当前: <em id="orgCurrentName">钛动科技</em></span>
+                    </div>
+                    <div class="org-popover-list" id="orgPopoverList">
+                        <div class="org-option active" data-org-id="1" data-org-name="钛动科技">
+                            <svg class="org-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                            <span class="org-name">钛动科技</span>
+                            <svg class="org-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="org-option" data-org-id="2" data-org-name="张三工作室">
+                            <svg class="org-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                            <span class="org-name">张三工作室</span>
+                            <svg class="org-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </aside>
 
         <!-- 二级侧边栏 -->

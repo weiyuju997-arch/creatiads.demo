@@ -465,29 +465,21 @@ input, select, textarea { font-family: inherit; }
     font-weight: 500;
 }
 
-.role-badge.admin {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.role-badge.member {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
+/* 有管理权限的角色 —— 主色 teal */
+.role-badge.admin,
 .role-badge.owner {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: #f0fdfa;
+    color: #0f766e;
+    border: 1px solid #ccfbf1;
 }
 
-.role-badge.editor {
-    background: #d1fae5;
-    color: #065f46;
-}
-
+/* 普通角色 —— 中性灰 */
+.role-badge.member,
+.role-badge.editor,
 .role-badge.viewer {
-    background: #f3f4f6;
-    color: #6b7280;
+    background: #f4f4f5;
+    color: #52525b;
+    border: 1px solid #e4e4e7;
 }
 
 /* ===== Workspace Tags ===== */
@@ -519,9 +511,9 @@ input, select, textarea { font-family: inherit; }
     font-weight: 500;
 }
 
-.workspace-tag .ws-role-tag.owner { background: #fee2e2; color: #b91c1c; }
-.workspace-tag .ws-role-tag.editor { background: #d1fae5; color: #065f46; }
-.workspace-tag .ws-role-tag.viewer { background: #f3f4f6; color: #6b7280; }
+.workspace-tag .ws-role-tag.owner  { background: #f0fdfa; color: #0f766e; }
+.workspace-tag .ws-role-tag.editor { background: #f4f4f5; color: #52525b; }
+.workspace-tag .ws-role-tag.viewer { background: #f4f4f5; color: #52525b; }
 
 .workspace-tag.admin-virtual {
     color: #14b8a6;
@@ -2107,4 +2099,50 @@ textarea.form-input { resize: vertical; min-height: 60px; }
     border-color: #5eead4;
     border-style: solid;
     color: #0f172a;
+}
+
+
+/* ===== 空间角色 / 权限 下拉与只读态 ===== */
+.ws-role-select,
+.ws-perm-select {
+    padding: 4px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #fff;
+    font-size: 12px;
+    color: #0f172a;
+    cursor: pointer;
+    min-width: 90px;
+}
+
+.ws-role-select:focus,
+.ws-perm-select:focus {
+    outline: none;
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
+}
+
+.ws-perm-locked {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #f0fdfa;
+    color: #0f766e;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #ccfbf1;
+}
+
+.ws-perm-readonly {
+    display: inline-block;
+    padding: 3px 8px;
+    color: #475569;
+    font-size: 12px;
+}
+
+
+.ws-perm-viewer-hint {
+    color: #94a3b8;
+    font-size: 12px;
+    font-style: italic;
 }
