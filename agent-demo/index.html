@@ -1,0 +1,3136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent - Creatiads</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  background: #fafafa;
+  color: #1f2937;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+/* 左侧对话历史（Agent 二级栏） */
+.sidebar {
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: 16px 12px 12px;
+  gap: 10px;
+}
+
+/* 顶部标题栏：最近对话 › */
+.sidebar-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+}
+.sidebar-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #374151;
+}
+.sidebar-title-more {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+.sidebar-title-more:hover { color: #111827; }
+
+/* 新建对话 */
+.new-analysis-btn {
+  padding: 10px 14px;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.new-analysis-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.conversation-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+.conversation-item:hover {
+  background: #f3f4f6;
+}
+.conversation-item.active {
+  background: #f3f4f6;
+  border-left: none;
+}
+.conversation-item .conv-menu {
+  opacity: 0;
+  color: #9ca3af;
+  margin-left: auto;
+  transition: opacity 0.15s;
+}
+.conversation-item:hover .conv-menu,
+.conversation-item.active .conv-menu {
+  opacity: 1;
+}
+
+.conversation-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.conversation-item.active .conversation-title {
+  color: #111827;
+  font-weight: 500;
+}
+.conv-menu {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+}
+.conv-menu:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #111827;
+}
+
+/* 右侧主内容区 */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-header {
+  padding: 80px 32px 24px;
+  background: transparent;
+  border-bottom: none;
+}
+
+.agent-intro {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.agent-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  background: radial-gradient(circle at 50% 50%, #fee2e2 0%, #fecaca 25%, #ffffff 70%);
+  box-shadow: 0 8px 24px rgba(251, 113, 133, 0.15);
+  position: relative;
+}
+.agent-icon::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(251, 113, 133, 0.15) 0%, transparent 70%);
+  z-index: -1;
+}
+
+.agent-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 0;
+  color: #111827;
+  letter-spacing: -0.5px;
+}
+
+.agent-desc {
+  display: none;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  max-width: 800px;
+  margin: 16px auto 0;
+  padding: 0 32px;
+}
+
+/* ===== 欢迎页居中输入框 ===== */
+.hero-input-outer {
+  width: 100%;
+  padding: 0 32px 8px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.hero-input-wrapper {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  position: relative;
+  box-sizing: border-box;
+}
+.hero-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px 18px 52px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  font-size: 14px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+  background: white;
+  min-height: 116px;
+  color: #1f2937;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+}
+.hero-input::placeholder { color: #9ca3af; }
+.hero-input:focus {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+.hero-input-footer {
+  position: absolute;
+  bottom: 20px;
+  right: 46px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hero-model-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: #f3f4f6;
+  color: #4b5563;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: none;
+  font-family: inherit;
+}
+.hero-model-chip:hover { background: #e5e7eb; }
+.hero-send-btn {
+  width: 34px;
+  height: 34px;
+  background: #111827;
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s;
+}
+.hero-send-btn:hover { transform: scale(1.05); }
+
+/* 欢迎页轻量小卡片（一行 5 个） */
+.quick-actions.quick-actions-hero {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  max-width: 720px;
+  margin: 12px auto 0;
+  padding: 0 32px;
+}
+.quick-actions-hero .action-card {
+  padding: 14px 12px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 82px;
+  position: relative;
+  transition: all 0.15s;
+}
+.quick-actions-hero .action-card:hover {
+  background: #ffffff;
+  border-color: #111827;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.quick-actions-hero .action-icon {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  background: transparent;
+  color: #6b7280;
+  border-radius: 0;
+}
+.quick-actions-hero .action-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.quick-actions-hero .action-title {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 0;
+  color: #1f2937;
+}
+.quick-actions-hero .action-subtitle { display: none; }
+
+/* 订阅卡片：更克制的视觉，跟通用模板保持家族感 */
+.quick-actions-hero .action-card--subscribed {
+  background: #ffffff;
+  border-color: #e5e7eb;
+}
+.quick-actions-hero .action-card--subscribed:hover {
+  border-color: #4338ca;
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.08);
+}
+.quick-actions-hero .action-card--subscribed .action-icon {
+  color: #4338ca;
+}
+.quick-actions-hero .action-card--subscribed .subscribe-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 0;
+  border-radius: 0;
+  line-height: 1;
+}
+.quick-actions-hero .action-card--subscribed .subscribe-badge svg {
+  width: 9px;
+  height: 9px;
+  color: #4338ca;
+}
+.quick-actions-hero .action-card--subscribed.paused .action-icon { color: #b45309; }
+.quick-actions-hero .action-card--subscribed.paused .subscribe-badge { color: #9ca3af; }
+.quick-actions-hero .action-card--subscribed.paused .subscribe-badge svg { color: #b45309; }
+.quick-actions-hero .action-card--subscribed.paused:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.08);
+}
+
+/* ===== 欢迎页：Tab 切换 ===== */
+.quick-tabs-bar {
+  max-width: 720px;
+  margin: 24px auto 4px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.quick-tab {
+  background: none;
+  border: none;
+  padding: 8px 4px 10px;
+  margin-right: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9ca3af;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s;
+  font-family: inherit;
+}
+.quick-tab:hover { color: #4b5563; }
+.quick-tab.active {
+  color: #111827;
+  font-weight: 600;
+}
+.quick-tab.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: #111827;
+  border-radius: 2px;
+}
+.quick-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 17px;
+  padding: 0 5px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: 9px;
+  line-height: 1;
+}
+.quick-tab.active .quick-tab-count {
+  background: #111827;
+  color: white;
+}
+.quick-tabs-action {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.quick-tabs-action:hover { color: #111827; }
+
+.quick-panel { display: none; }
+.quick-panel.active { display: block; }
+
+/* 订阅卡片：复用 action-card 但增加角标与配色 */
+.action-card--subscribed {
+  position: relative;
+}
+.action-card--subscribed .action-icon {
+  background: #eef2ff;
+  color: #4338ca;
+}
+.action-card--subscribed:hover {
+  border-color: #4338ca;
+}
+.action-card--subscribed .subscribe-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  line-height: 1;
+}
+.action-card--subscribed .subscribe-badge svg {
+  width: 9px;
+  height: 9px;
+}
+.action-card--subscribed.paused .action-icon {
+  background: #fef3c7;
+  color: #b45309;
+}
+.action-card--subscribed.paused .subscribe-badge {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.quick-empty {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 32px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+}
+.quick-empty svg {
+  margin-bottom: 10px;
+  color: #d1d5db;
+}
+.quick-empty-title {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.main-content.in-chat .quick-tabs-bar,
+.main-content.in-chat .quick-panel {
+  display: none;
+}
+
+.action-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.action-card:hover {
+  border-color: #374151;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transform: translateY(-2px);
+}
+
+.action-icon {
+  width: 40px;
+  height: 40px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  color: #111827;
+}
+
+.action-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.action-subtitle {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+}
+
+/* ===== 真实对话气泡 ===== */
+.chat-thread {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.msg-row {
+  display: flex;
+  gap: 12px;
+  animation: msgIn 0.3s ease;
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.msg-row.user {
+  justify-content: flex-end;
+}
+
+.msg-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.msg-row.user .msg-avatar {
+  background: #1f2937;
+  color: white;
+  order: 2;
+}
+.msg-row.agent .msg-avatar {
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+}
+
+.msg-bubble {
+  max-width: 720px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.7;
+  word-wrap: break-word;
+}
+.msg-row.user .msg-bubble {
+  background: #f3f4f6;
+  color: #1f2937;
+  border-bottom-right-radius: 4px;
+}
+.msg-row.agent .msg-bubble {
+  background: transparent;
+  color: #1f2937;
+  padding: 0;
+}
+.msg-row.agent .msg-bubble strong {
+  color: #111827;
+  font-weight: 600;
+}
+.msg-row.agent .msg-bubble code {
+  background: #f3f4f6;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  color: #b91c1c;
+}
+.msg-row.agent .msg-bubble p {
+  margin-bottom: 12px;
+}
+.msg-row.agent .msg-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.msg-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #9ca3af;
+}
+.msg-meta .msg-action {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.msg-meta .msg-action:hover {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Tool activity */
+.tool-activity {
+  max-width: 720px;
+  margin-left: 40px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  animation: msgIn 0.3s ease;
+}
+.tool-activity .tool-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #374151;
+  flex-shrink: 0;
+}
+.tool-activity .tool-dot.running {
+  background: #f59e0b;
+  animation: dotPulse 1s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.tool-activity .tool-label {
+  font-weight: 500;
+  color: #1f2937;
+}
+.tool-activity .tool-latest {
+  color: #6b7280;
+  margin-left: auto;
+}
+.tool-activity .tool-caret {
+  color: #9ca3af;
+}
+
+/* Data scope 顶部条 */
+.data-scope-bar {
+  max-width: 900px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.data-scope-bar .scope-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* 打字指示器 */
+.typing-indicator {
+  display: inline-flex;
+  gap: 3px;
+  padding: 8px 0;
+}
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #111827;
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* 对话状态时隐藏欢迎区 */
+.main-content.in-chat .main-header,
+.main-content.in-chat .quick-actions,
+.main-content.in-chat .hero-input-outer {
+  display: none;
+}
+/* 欢迎页时隐藏底部输入框（只保留居中 hero 输入） */
+.main-content:not(.in-chat) .input-container {
+  display: none;
+}
+/* 让主内容区在欢迎页时垂直居中偏上，chat-area 撑高但不显示 */
+.main-content:not(.in-chat) .chat-area { display: none; }
+
+/* 流式打字光标 */
+.cursor-blink {
+  display: inline-block;
+  color: #111827;
+  font-weight: 700;
+  animation: cursorBlink 1s step-end infinite;
+  margin-left: 2px;
+}
+@keyframes cursorBlink {
+  50% { opacity: 0; }
+}
+
+.input-container {
+  padding: 20px 32px;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+}
+
+.input-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.chat-input {
+  width: 100%;
+  padding: 14px 54px 14px 18px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  font-size: 14px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  background: white;
+}
+
+.chat-input:focus {
+  border-color: #111827;
+}
+
+.send-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 34px;
+  height: 34px;
+  background: #111827;
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.send-btn:hover {
+  transform: scale(1.05);
+}
+
+/* 用户引导按钮 */
+#agentGuideFab {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  height: 38px;
+  padding: 0 16px;
+  background: #111827;
+  color: white;
+  border: none;
+  border-radius: 19px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+#agentGuideFab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+}
+
+/* 我的订阅悬浮按钮 */
+#mySubFab {
+  position: fixed;
+  top: 16px;
+  right: 140px;
+  height: 38px;
+  padding: 0 16px;
+  background: white;
+  color: #111827;
+  border: 1.5px solid #d1d5db;
+  border-radius: 19px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+#mySubFab:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(0,0,0,0.1);
+}
+#mySubFab .fab-badge {
+  background: #111827;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Toast 中的操作按钮 */
+.sub-toast-action {
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  transition: background 0.15s;
+}
+.sub-toast-action:hover { background: rgba(0,0,0,0.06); }
+
+.input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.model-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.model-selector:hover { background: #e5e7eb; }
+
+/* API 状态徽章 */
+.api-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.api-status.connected {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+.api-status.disconnected {
+  background: #fef3c7;
+  color: #b45309;
+}
+.api-status:hover { filter: brightness(0.95); }
+.api-status .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ===== 设置弹窗 ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: fadeIn 0.2s;
+}
+.modal-overlay.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: white;
+  border-radius: 14px;
+  padding: 28px;
+  width: 480px;
+  max-width: 92vw;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: modalIn 0.25s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal .modal-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.modal-field {
+  margin-bottom: 16px;
+}
+.modal-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+.modal-field input,
+.modal-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.modal-field input:focus,
+.modal-field select:focus {
+  border-color: #374151;
+}
+.modal-field .field-hint {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 5px;
+  line-height: 1.5;
+}
+.modal-field .field-hint a {
+  color: #111827;
+  text-decoration: none;
+}
+.modal-field .field-hint a:hover { text-decoration: underline; }
+
+.modal-warning {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+}
+.modal-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.modal-btn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.modal-btn.primary {
+  background: #111827;
+  color: white;
+}
+.modal-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.modal-btn.secondary {
+  background: white;
+  color: #6b7280;
+  border: 1.5px solid #e5e7eb;
+}
+.modal-btn.secondary:hover { background: #f9fafb; }
+.modal-btn.danger {
+  background: white;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  margin-right: auto;
+}
+.modal-btn.danger:hover { background: #fef2f2; }
+
+/* 错误气泡 */
+.msg-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-left: 40px;
+  max-width: 720px;
+}
+.msg-error strong { color: #7f1d1d; }
+.msg-error .msg-error-action {
+  color: #dc2626;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+/* 滚动条样式 */
+.conversation-list::-webkit-scrollbar,
+.chat-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conversation-list::-webkit-scrollbar-thumb,
+.chat-area::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.conversation-list::-webkit-scrollbar-track,
+.chat-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ===== 订阅选段模式 ===== */
+.msg-row.agent.selecting .msg-bubble p {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px dashed transparent;
+  transition: all 0.15s;
+  margin-bottom: 6px;
+  opacity: 0.5;
+  position: relative;
+}
+.msg-row.agent.selecting .msg-bubble p:hover {
+  opacity: 1;
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+.msg-row.agent.selecting .msg-bubble p.selected {
+  opacity: 1;
+  background: #f9fafb;
+  border-color: #111827;
+  border-style: solid;
+}
+.msg-row.agent.selecting .msg-bubble p.selected::before {
+  content: '✓';
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  background: #111827;
+  color: white;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 选段模式提示气泡（悬浮在消息上方） */
+.select-mode-tip {
+  position: absolute;
+  top: -32px;
+  left: 0;
+  background: #111827;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  animation: msgIn 0.2s ease;
+}
+.select-mode-tip::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 20px;
+  border: 5px solid transparent;
+  border-top-color: #111827;
+  border-bottom: 0;
+}
+.msg-row.agent.selecting > div { position: relative; }
+
+/* 贴在选中消息下方的确认条 */
+.select-confirm-bar {
+  margin: 10px 0 4px 40px;
+  background: white;
+  border: 1.5px solid #111827;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  max-width: 520px;
+  animation: msgIn 0.2s ease;
+}
+.select-confirm-bar.active { display: flex; }
+.select-confirm-bar .sc-count {
+  font-size: 13px;
+  color: #374151;
+}
+.select-confirm-bar .sc-count strong {
+  color: #111827;
+  font-size: 15px;
+  margin: 0 3px;
+}
+.select-confirm-bar .sc-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  flex: 1;
+}
+.select-confirm-bar .sc-btn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.select-confirm-bar .sc-btn.cancel {
+  background: white;
+  color: #6b7280;
+  border: 1.5px solid #e5e7eb;
+}
+.select-confirm-bar .sc-btn.cancel:hover { background: #f9fafb; }
+.select-confirm-bar .sc-btn.confirm {
+  background: #111827;
+  color: white;
+}
+.select-confirm-bar .sc-btn.confirm:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+.select-confirm-bar .sc-btn.confirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===== 订阅引导条 ===== */
+.subscribe-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 40px;
+  margin-top: 6px;
+  max-width: 720px;
+  background: linear-gradient(135deg, #f3f4f6, #f9fafb);
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #111827;
+  animation: msgIn 0.35s ease;
+}
+.subscribe-hint svg { flex-shrink: 0; }
+.subscribe-hint-text { flex: 1; line-height: 1.5; }
+.subscribe-hint-text strong { color: #4b5563; }
+.subscribe-hint-btn {
+  height: 30px;
+  padding: 0 14px;
+  background: #111827;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.subscribe-hint-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+.subscribe-hint-dismiss {
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.subscribe-hint-dismiss:hover { background: #e5e7eb; color: #6b7280; }
+
+/* ===== 侧边栏订阅入口 ===== */
+.sidebar-subscribe-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: calc(100% - 24px);
+  text-align: left;
+  transition: background 0.15s;
+  position: relative;
+}
+.sidebar-subscribe-btn:hover { background: #f3f4f6; }
+.sidebar-subscribe-btn .sub-badge {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #111827;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ===== 订阅配置弹窗 ===== */
+.sub-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10002;
+}
+.sub-modal-overlay.active { display: flex; }
+.sub-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  width: 460px;
+  max-width: 94vw;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+  animation: modalIn 0.25s ease;
+}
+.sub-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.sub-modal-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sub-modal-title { font-size: 17px; font-weight: 700; color: #111827; margin-bottom: 3px; }
+.sub-modal-subtitle { font-size: 12.5px; color: #6b7280; line-height: 1.5; }
+.sub-field { margin-bottom: 16px; }
+.sub-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 7px;
+}
+.sub-field input[type="text"],
+.sub-field input[type="time"],
+.sub-field select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.sub-field input:focus,
+.sub-field select:focus { border-color: #374151; }
+
+/* 分析逻辑摘要区 */
+.sub-analysis-meta {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.sub-meta-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+}
+.sub-meta-row:last-child { margin-bottom: 0; }
+.sub-meta-label {
+  color: #9ca3af;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 1px;
+  width: 52px;
+}
+.sub-meta-value {
+  color: #1f2937;
+  line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.sub-meta-tag {
+  display: inline-flex;
+  align-items: center;
+  background: #e5e7eb;
+  color: #374151;
+  padding: 1px 8px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.sub-meta-tag.anomaly {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+}
+.sub-meta-hint {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-left: 4px;
+}
+
+/* 编辑订阅：段落卡片可增删 */
+.sub-edit-paragraphs {
+  margin-bottom: 14px;
+}
+.sub-edit-paragraphs-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 7px;
+}
+.sub-edit-paragraphs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.sub-edit-paragraph-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 12px 10px 30px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.15s;
+  max-height: 96px;
+  overflow: hidden;
+}
+.sub-edit-paragraph-card:hover {
+  border-color: #d1d5db;
+  background: #fafafa;
+}
+.sub-edit-paragraph-card::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 12px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #111827;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.sub-edit-paragraph-card::before {
+  content: '✓';
+  font-family: -apple-system, sans-serif;
+  line-height: 14px;
+  text-align: center;
+}
+.sub-edit-paragraph-card.removed {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+.sub-edit-paragraph-card.removed::before {
+  content: '✕';
+  background: #e5e7eb;
+  color: #6b7280;
+}
+.sub-edit-paragraph-card.locked {
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+.sub-edit-paragraph-card p {
+  margin: 0 0 4px 0;
+}
+.sub-edit-paragraph-card p:last-child { margin-bottom: 0; }
+.sub-edit-paragraph-card strong { color: inherit; font-weight: 600; }
+.sub-edit-paragraphs-hint {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.sub-edit-paragraphs-hint.warn {
+  color: #b45309;
+}
+
+/* 上次结论折叠区 */
+.sub-last-result {
+  margin-bottom: 16px;
+}
+.sub-last-result-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #6b7280;
+  user-select: none;
+  padding: 4px 0;
+}
+.sub-last-result-toggle:hover { color: #374151; }
+.sub-last-result-toggle .toggle-arrow {
+  font-size: 10px;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+.sub-last-result-toggle.open .toggle-arrow { transform: rotate(180deg); }
+.sub-last-result-body {
+  display: none;
+  margin-top: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.sub-last-result-body.open { display: block; }
+.sub-last-result-note {
+  font-size: 11px;
+  color: #9ca3af;
+  padding: 8px 12px 6px;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sub-last-result-content {
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #374151;
+  line-height: 1.6;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+/* 频率 Tab */
+.sub-freq-tabs {
+  display: flex;
+  gap: 6px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 9px;
+  margin-bottom: 10px;
+}
+.sub-freq-tab {
+  flex: 1;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  font-weight: 500;
+}
+.sub-freq-tab:hover { color: #374151; }
+.sub-freq-tab.active {
+  background: white;
+  color: #111827;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.sub-freq-detail {
+  display: flex;
+  gap: 8px;
+}
+.sub-freq-selector {
+  flex: 1;
+}
+.sub-time-input {
+  flex: 1;
+}
+
+/* 锁定的渠道卡片 */
+.sub-channel-locked {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f3f4f6;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+}
+.sub-channel-icon {
+  width: 36px;
+  height: 36px;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sub-channel-info { flex: 1; min-width: 0; }
+.sub-channel-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 2px;
+}
+.sub-channel-target {
+  font-size: 11.5px;
+  color: #4b5563;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sub-channel-target strong { color: #111827; }
+.sub-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.sub-btn {
+  padding: 10px 20px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.sub-btn.primary {
+  flex: 1;
+  background: #111827;
+  color: white;
+}
+.sub-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.sub-btn.secondary {
+  background: white;
+  color: #6b7280;
+  border: 1.5px solid #e5e7eb;
+}
+.sub-btn.secondary:hover { background: #f9fafb; }
+
+/* ===== 我的订阅管理面板 ===== */
+.sub-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: none;
+  align-items: flex-start;
+  justify-content: flex-end;
+  z-index: 10002;
+}
+.sub-panel-overlay.active { display: flex; }
+.sub-panel {
+  width: 420px;
+  max-width: 96vw;
+  height: 100vh;
+  background: white;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  animation: panelSlideIn 0.25s ease;
+}
+@keyframes panelSlideIn {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.sub-panel-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sub-panel-header h2 { font-size: 17px; font-weight: 700; flex: 1; }
+.sub-panel-close {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 18px;
+  line-height: 1;
+}
+.sub-panel-close:hover { background: #e5e7eb; }
+.sub-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+}
+.sub-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #9ca3af;
+  font-size: 14px;
+  gap: 10px;
+}
+.sub-item {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  transition: border-color 0.15s;
+}
+.sub-item:hover { border-color: #d1d5db; }
+.sub-item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.sub-item-name {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.4;
+}
+.sub-item-toggle {
+  width: 36px;
+  height: 20px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  border: none;
+}
+.sub-item-toggle.on { background: #111827; }
+.sub-item-toggle::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.sub-item-toggle.on::after { transform: translateX(16px); }
+.sub-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  flex-wrap: wrap;
+}
+.sub-item-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: #374151;
+}
+.sub-item-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.sub-item-action-btn {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1.5px solid #e5e7eb;
+  background: white;
+  color: #6b7280;
+  transition: all 0.15s;
+}
+.sub-item-action-btn:hover { background: #f9fafb; color: #374151; }
+.sub-item-action-btn.delete { color: #dc2626; border-color: #fecaca; }
+.sub-item-action-btn.delete:hover { background: #fef2f2; }
+
+/* 订阅成功 toast */
+.sub-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #111827;
+  color: white;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  z-index: 20000;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sub-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- 左侧对话历史（Agent 二级栏） -->
+  <aside class="sidebar">
+    <div class="sidebar-title-bar">
+      <span class="sidebar-title">最近对话</span>
+      <button class="sidebar-title-more" title="展开更多">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <button class="new-analysis-btn" onclick="startNewAnalysis()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      新建对话
+    </button>
+
+    <div class="conversation-list" id="conversationList">
+      <!-- 对话记录将由JS动态生成 -->
+    </div>
+  </aside>
+
+  <!-- 右侧主内容区 -->
+  <main class="main-content">
+    <div class="main-header">
+      <div class="agent-intro">
+        <div class="agent-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/>
+          </svg>
+        </div>
+        <h1 class="agent-title">需要我帮你诊断账户吗？</h1>
+      </div>
+    </div>
+
+    <!-- 居中输入框（欢迎页 Hero） -->
+    <div class="hero-input-outer" id="heroInputOuter">
+      <div class="hero-input-wrapper" id="heroInputWrapper">
+        <textarea class="hero-input" id="heroInput"
+          placeholder="描述你的需求，AI 帮你快速检查数据与广告异常"
+          rows="1"
+          onkeydown="handleHeroKeyDown(event)"></textarea>
+        <div class="hero-input-footer">
+          <button class="hero-model-chip" title="Creatiads Agent">
+            GPT-2.9
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <button class="hero-send-btn" onclick="sendFromHero()" title="发送">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="19" x2="12" y2="5"/>
+              <polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 用户引导悬浮按钮 -->
+    <button id="agentGuideFab" onclick="openGuideFromAgent()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      用户引导
+    </button>
+
+    <!-- 我的订阅悬浮按钮 -->
+    <button id="mySubFab" onclick="openSubPanel()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      我的订阅
+      <span class="fab-badge" id="mySubFabBadge" style="display:none;">0</span>
+    </button>
+
+    <!-- Tab 切换：通用模板 / 我的订阅 -->
+    <div class="quick-tabs-bar">
+      <button class="quick-tab active" data-panel="templates" onclick="switchQuickTab('templates')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        通用模板
+      </button>
+      <button class="quick-tab" data-panel="mine" onclick="switchQuickTab('mine')" id="tabMine" style="display:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        我的订阅
+        <span class="quick-tab-count" id="tabMineCount">0</span>
+      </button>
+    </div>
+
+    <!-- 我的订阅面板 -->
+    <div class="quick-panel" id="quickPanelMine">
+      <div class="quick-actions quick-actions-hero" id="mineGrid"></div>
+    </div>
+
+    <!-- 通用模板面板 -->
+    <div class="quick-panel active" id="quickPanelTemplates">
+    <div class="quick-actions quick-actions-hero" id="quickActionsGrid">
+      <div class="action-card action-card--builtin" onclick="selectQuickAction('账号概览')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="9" x2="9" y2="20"/>
+          </svg>
+        </div>
+        <div class="action-title">账号概览</div>
+        <div class="action-subtitle">Account Overview</div>
+      </div>
+
+      <div class="action-card action-card--builtin" onclick="selectQuickAction('广告疲劳')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </div>
+        <div class="action-title">广告疲劳</div>
+        <div class="action-subtitle">Ad Fatigue</div>
+      </div>
+
+      <div class="action-card action-card--builtin" onclick="selectQuickAction('广告系列表现')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <div class="action-title">广告系列表现</div>
+        <div class="action-subtitle">Campaign Performance</div>
+      </div>
+
+      <div class="action-card action-card--builtin" onclick="selectQuickAction('优胜素材')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <path d="M9 15l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="action-title">优胜素材</div>
+        <div class="action-subtitle">Top Creatives</div>
+      </div>
+
+      <div class="action-card action-card--builtin" onclick="selectQuickAction('素材元素')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="action-title">素材元素</div>
+        <div class="action-subtitle">Creative Elements</div>
+      </div>
+    </div>
+    </div>
+    <!-- /通用模板面板 -->
+
+    <div class="chat-area" id="chatArea">
+      <!-- 对话内容将由JS动态生成 -->
+    </div>
+
+    <div class="input-container">
+      <div class="input-wrapper">
+        <textarea 
+          class="chat-input" 
+          id="chatInput" 
+          placeholder="Ask about your ad performance..."
+          rows="1"
+          onkeydown="handleKeyDown(event)"
+        ></textarea>
+        <button id="sendBtn" class="send-btn" onclick="sendMessage()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 2L11 13"/>
+            <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+        </button>
+      </div>
+        <div class="input-footer">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="model-selector" title="Creatiads Agent">
+            <span id="modelLabel">Creatiads Agent</span>
+          </div>
+        </div>
+        <span>Press Enter to send, Shift+Enter for new line</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 订阅配置弹窗 -->
+<div class="sub-modal-overlay" id="subModal">
+  <div class="sub-modal">
+    <div class="sub-modal-header">
+      <div class="sub-modal-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </div>
+      <div>
+        <div class="sub-modal-title">订阅此报告</div>
+        <div class="sub-modal-subtitle">Agent 将在你设定的时间自动分析并推送结果</div>
+      </div>
+    </div>
+    <div class="sub-analysis-meta" id="subAnalysisMeta"></div>
+
+    <!-- 编辑订阅模式：段落卡片可增删（新建订阅时不展示） -->
+    <div class="sub-edit-paragraphs" id="subEditParagraphs" style="display:none;">
+      <div class="sub-edit-paragraphs-label">重点推送内容</div>
+      <div class="sub-edit-paragraphs-list" id="subEditParagraphsList"></div>
+      <div class="sub-edit-paragraphs-hint" id="subEditParagraphsHint"></div>
+    </div>
+
+    <div class="sub-last-result" id="subLastResult">
+      <div class="sub-last-result-toggle" onclick="toggleLastResult(this)">
+        <span class="toggle-arrow">▼</span>
+        <span>重点推送内容（首次分析结果）</span>
+      </div>
+      <div class="sub-last-result-body">
+        <div class="sub-last-result-note">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+          仅供参考，实际推送会用最新数据重新生成
+        </div>
+        <div class="sub-last-result-content" id="subLastResultContent"></div>
+      </div>
+    </div>
+    <div class="sub-field">
+      <label>报告名称</label>
+      <input type="text" id="subNameInput" placeholder="例如：每日 ROAS 日报">
+    </div>
+    <div class="sub-field">
+      <label>推送频率</label>
+      <div class="sub-freq-tabs">
+        <button type="button" class="sub-freq-tab active" data-freq="daily" onclick="selectFreq('daily')">每日</button>
+        <button type="button" class="sub-freq-tab" data-freq="weekly" onclick="selectFreq('weekly')">每周</button>
+        <button type="button" class="sub-freq-tab" data-freq="monthly" onclick="selectFreq('monthly')">每月</button>
+      </div>
+      <div class="sub-freq-detail">
+        <select id="subWeekdaySelect" class="sub-freq-selector" style="display:none;">
+          <option value="1">星期一</option>
+          <option value="2">星期二</option>
+          <option value="3">星期三</option>
+          <option value="4">星期四</option>
+          <option value="5">星期五</option>
+          <option value="6">星期六</option>
+          <option value="0">星期日</option>
+        </select>
+        <select id="subMonthdaySelect" class="sub-freq-selector" style="display:none;"></select>
+        <input type="time" id="subTimeInput" value="09:00" class="sub-time-input">
+      </div>
+    </div>
+    <div class="sub-field">
+      <label>推送渠道</label>
+      <div class="sub-channel-locked">
+        <div class="sub-channel-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <div class="sub-channel-info">
+          <div class="sub-channel-name">飞书</div>
+          <div class="sub-channel-target">推送至 <strong id="subTargetEmail">martin.wei@tec-do.com</strong> 的 Creatiads 机器人</div>
+        </div>
+      </div>
+    </div>
+    <div class="sub-modal-actions">
+      <button class="sub-btn secondary" onclick="closeSubModal()">取消</button>
+      <button class="sub-btn primary" onclick="confirmSubscribe()">确认订阅</button>
+    </div>
+  </div>
+</div>
+
+<!-- 我的订阅管理面板 -->
+<div class="sub-panel-overlay" id="subPanel">
+  <div class="sub-panel">
+    <div class="sub-panel-header">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <h2>我的订阅</h2>
+      <button class="sub-panel-close" onclick="closeSubPanel()">×</button>
+    </div>
+    <div class="sub-panel-body" id="subPanelBody"></div>
+  </div>
+</div>
+
+<!-- 选段模式确认条（动态插入到选中消息下方） -->
+
+<!-- Toast 提示 -->
+<div class="sub-toast" id="subToast"></div>
+
+<script>
+// 模拟对话记录数据（与图二对齐）
+const conversations = [
+  { id: 1, title: '广告异常分析' },
+  { id: 2, title: 'Google 账户诊断' },
+  { id: 3, title: '每日投放汇报' },
+  { id: 4, title: '素材疲劳检查' },
+  { id: 5, title: '再营销预算建议' },
+  { id: 6, title: '渠道 ROAS 对比' }
+];
+
+// 渲染对话列表
+function renderConversations() {
+  const list = document.getElementById('conversationList');
+  list.innerHTML = conversations.map((conv, index) => `
+    <div class="conversation-item ${index === 0 ? 'active' : ''}" onclick="selectConversation(${conv.id})">
+      <span class="conversation-title">${conv.title}</span>
+      <button class="conv-menu" title="更多" onclick="event.stopPropagation();">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+// 选择对话
+function selectConversation(id) {
+  const items = document.querySelectorAll('.conversation-item');
+  items.forEach((item, index) => {
+    item.classList.toggle('active', conversations[index].id === id);
+  });
+}
+
+// ====== 真实对话逻辑 ======
+let inChatMode = false;
+
+
+
+// 预置的示例回复（按问题关键词匹配）
+const REPLY_LIBRARY = [
+  {
+    match: /spend|花费|暴跌|下跌|6.?13|6月13/i,
+    toolCount: 11,
+    toolLatest: 'renderChart',
+    reply: `我来分析 6 月 13 日 spend 暴跌的原因。先做整体趋势对比，再下钻到账户/广告系列层级。数据画像很清晰。我再下钻看一下 <strong>Tecdo_V_GZWY_01</strong>（6/12 花了 $2036 占大头，6/13 直接归零）和整体大盘的占比，以确认是不是单一账户引起的暴跌。注意到 6/12 vs 6/13 只返回了前 10 个账户（58 个中的 20 行）。
+
+我看下完整的 6/12→6/13 各账户变化，并对比看是哪几个账户主导了大盘暴跌。返回截断了（默认只 10 行）。我把 limit 调到 100 居然也只给 10 行——看起来后端忽略了 limit。让我换个思路：用 BAR 图来可视化所有 58 个账户在两天的支出对比，这样能直接看到主导账户。或者更精确——直接用 renderChart 拉两天对比图。
+
+但更实用的是先确认主导账户。从已抽样看到：<strong>Tecdo_V_GZWY_01 从 $2036 → $0</strong>（降了 ~$2036），<strong>vibewalls-直投-钛动-0224 从 $365 → $924</strong>（反而涨了 ~$558）。光这一个 Tecdo_V_GZWY_01 归零就能解释大部分大盘下滑了。
+
+让我用图表方式拿全量数据：图表也只覆盖了 10 个账户（可能后端聚合默认 top 10）。但关键信息已经清楚了——让我把焦点收窄到大额变化账户，把全部账户按变化幅度排序：后端硬限制 10 个分组，且 <code>stat_time_day</code> 显示为 "Unknown"（可能字段名不对）。我换个思路——直接对比那些 6/12 高消耗的账户，重点看 Tecdo_V_GZWY_01（单账户 ~$2k）是否归零就能解释了大部分跌幅。
+
+之前看到的整体数字：<strong>6/12 总支出 ≈ $4,194（58 个账户），6/13 总支出 ≈ $2,436（58 个账户）</strong>——差额约 <strong>-$1,758</strong>。而 Tecdo_V_GZWY_01 单账户就从 $2,036 → $0，降 -$2,036，<strong>单这一个账户就完全解释了大盘下降</strong>（其他账户净变化 +$278 部分抵消）。
+
+让我确认大盘数字并核查 Tecdo_V_GZWY_01 是否真的"完全停投"：证据非常清楚了。让我画一张图直观呈现。`
+  }
+];
+
+const DEFAULT_TOOL_STEPS = [
+  'queryDataset',
+  'buildQuery',
+  'runQuery',
+  'aggregateMetrics',
+  'renderChart'
+];
+
+function ensureChatMode() {
+  if (inChatMode) return;
+  const main = document.querySelector('.main-content');
+  main.classList.add('in-chat');
+  // 添加线程容器
+  const chatArea = document.getElementById('chatArea');
+  chatArea.innerHTML = `
+    <div class="data-scope-bar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="scope-label">DATA SCOPE</span>
+      <span>All resources accessible</span>
+    </div>
+    <div class="chat-thread" id="chatThread"></div>
+  `;
+  inChatMode = true;
+}
+
+function appendUserMessage(text) {
+  ensureChatMode();
+  const thread = document.getElementById('chatThread');
+  const row = document.createElement('div');
+  row.className = 'msg-row user';
+  row.innerHTML = `
+    <div class="msg-bubble">${escapeHtml(text)}</div>
+    <div class="msg-avatar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+  `;
+  thread.appendChild(row);
+  scrollChatToBottom();
+}
+
+function appendToolActivity(total, latest) {
+  const thread = document.getElementById('chatThread');
+  const div = document.createElement('div');
+  div.className = 'tool-activity';
+  div.innerHTML = `
+    <span class="tool-dot running"></span>
+    <span class="tool-label">Tool activity</span>
+    <span id="toolProgress">0 tools / ${total} running</span>
+    <span class="tool-latest">Latest: <strong id="toolLatest">${latest}</strong></span>
+    <span class="tool-caret">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+    </span>
+  `;
+  thread.appendChild(div);
+  scrollChatToBottom();
+  return div;
+}
+
+function updateToolActivity(el, done, total, latest, finished) {
+  const progress = el.querySelector('#toolProgress');
+  const latestEl = el.querySelector('#toolLatest');
+  const dot = el.querySelector('.tool-dot');
+  if (progress) progress.textContent = finished ? `${total} tools / ${total} done` : `${done} tools / ${total} running`;
+  if (latestEl && latest) latestEl.textContent = latest;
+  if (finished && dot) dot.classList.remove('running');
+}
+
+function appendAgentBubble() {
+  const thread = document.getElementById('chatThread');
+  const row = document.createElement('div');
+  row.className = 'msg-row agent';
+  row.innerHTML = `
+    <div class="msg-avatar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/>
+      </svg>
+    </div>
+    <div style="flex:1;">
+      <div class="msg-bubble">
+        <div class="typing-indicator"><span></span><span></span><span></span></div>
+      </div>
+      <div class="msg-meta" style="display:none;">
+        <span class="msg-time"></span>
+        <span class="msg-action" title="复制">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </span>
+        <span class="msg-action" title="下载">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </span>
+        <span class="msg-action msg-subscribe-btn" title="订阅此报告">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          订阅
+        </span>
+      </div>
+    </div>
+  `;
+  thread.appendChild(row);
+  scrollChatToBottom();
+  return row;
+}
+
+function typeAgentReply(row, html) {
+  const bubble = row.querySelector('.msg-bubble');
+  const meta = row.querySelector('.msg-meta');
+  const timeEl = row.querySelector('.msg-time');
+  bubble.innerHTML = '';
+  // 按段落分批渲染
+  const parts = html.split(/\n\n+/).filter(Boolean);
+  let idx = 0;
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  function step() {
+    if (idx >= parts.length) {
+      timeEl.textContent = timeStr;
+      meta.style.display = 'flex';
+      // 绑定订阅按钮：进入选段模式
+      const subBtn = row.querySelector('.msg-subscribe-btn');
+      if (subBtn) subBtn.onclick = () => enterSelectMode(row);
+      scrollChatToBottom();
+      return;
+    }
+    const p = document.createElement('p');
+    p.innerHTML = parts[idx];
+    p.style.opacity = '0';
+    bubble.appendChild(p);
+    requestAnimationFrame(() => { p.style.transition = 'opacity 0.3s'; p.style.opacity = '1'; });
+    idx++;
+    scrollChatToBottom();
+    setTimeout(step, 350);
+  }
+  step();
+}
+
+function findReply(message) {
+  for (const item of REPLY_LIBRARY) {
+    if (item.match.test(message)) return item;
+  }
+  // 默认回复：基于问题生成一段模拟分析
+  return {
+    toolCount: 6,
+    toolLatest: 'renderChart',
+    reply: `我来帮你分析这个问题。先拉取最近 7 天的相关数据，做整体趋势对比。
+
+从数据看，<strong>整体表现平稳</strong>，但有几个账户波动较大。让我下钻到广告系列层级看具体情况。
+
+主要发现： ① 头部 3 个广告系列占了 <strong>68% 的花费</strong>，ROAS 表现分化明显； ② <code>Summer-Sale-US</code> 系列 CPA 上升 22%，建议暂停或调整定向； ③ 素材层面，视频类 CTR 比图文高 <strong>1.4x</strong>，可加大投放。
+需要我针对某个方向深入分析吗？`
+  };
+}
+
+function scrollChatToBottom() {
+  const chatArea = document.getElementById('chatArea');
+  if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// 发送消息
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  if (!message) return;
+
+  appendUserMessage(message);
+  input.value = '';
+  input.style.height = 'auto';
+
+  sendMockReply(message);
+}
+
+// 极简 markdown 渲染（段落 + 粗体 + 行内代码）
+function renderMarkdown(text) {
+  // 转义
+  let s = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // 保留已存在的 strong/code 标签（模型可能主动输出）
+  s = s.replace(/&lt;(\/?)(strong|code|em|b|i)&gt;/g, '<$1$2>');
+  // **bold** → <strong>
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // `code` → <code>
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // 段落
+  const paragraphs = s.split(/\n{2,}/).filter(Boolean);
+  return paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+}
+
+// Mock 模式（未配 key）
+function sendMockReply(message) {
+  const reply = findReply(message);
+  const total = reply.toolCount || 6;
+  const toolEl = appendToolActivity(total, DEFAULT_TOOL_STEPS[0]);
+  let done = 0;
+  const stepMs = 220;
+  const interval = setInterval(() => {
+    done++;
+    const latest = DEFAULT_TOOL_STEPS[Math.min(done, DEFAULT_TOOL_STEPS.length - 1)];
+    if (done >= total) {
+      updateToolActivity(toolEl, total, total, reply.toolLatest, true);
+      clearInterval(interval);
+      setTimeout(() => {
+        const row = appendAgentBubble();
+        setTimeout(() => typeAgentReply(row, reply.reply), 400);
+      }, 200);
+    } else {
+      updateToolActivity(toolEl, done, total, latest, false);
+    }
+  }, stepMs);
+}
+
+// 键盘事件
+function handleKeyDown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+}
+
+// 快捷操作：欢迎页直接触发一次分析
+function selectQuickAction(action) {
+  if (!inChatMode) {
+    // 欢迎页：直接发出去
+    const input = document.getElementById('chatInput');
+    input.value = `帮我分析${action}`;
+    sendMessage();
+    return;
+  }
+  const input = document.getElementById('chatInput');
+  input.value = `帮我分析${action}`;
+  input.focus();
+}
+
+// 欢迎页居中输入框：发送
+function sendFromHero() {
+  const hero = document.getElementById('heroInput');
+  const text = hero.value.trim();
+  if (!text) return;
+  const input = document.getElementById('chatInput');
+  input.value = text;
+  hero.value = '';
+  sendMessage();
+}
+function handleHeroKeyDown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendFromHero();
+  }
+}
+
+// 新建分析：清空对话，回到欢迎页
+function startNewAnalysis() {
+  document.querySelectorAll('.conversation-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  const main = document.querySelector('.main-content');
+  main.classList.remove('in-chat');
+  const chatArea = document.getElementById('chatArea');
+  if (chatArea) chatArea.innerHTML = '';
+  inChatMode = false;
+  renderMySkills();
+  document.getElementById('chatInput').focus();
+}
+
+// 清空所有
+function clearAll() {
+  if (confirm('确定要清空所有对话记录吗？')) {
+    console.log('清空所有对话');
+  }
+}
+
+// 初始化
+renderConversations();
+
+// ====== 选段订阅模式 ======
+let selectModeRow = null;
+
+function enterSelectMode(row) {
+  // 如果已有其他选段模式，先退出
+  if (selectModeRow) exitSelectMode();
+
+  selectModeRow = row;
+  row.classList.add('selecting');
+
+  // 给每段绑定点击
+  const paras = row.querySelectorAll('.msg-bubble p');
+  paras.forEach(p => {
+    p.onclick = () => toggleParagraph(p);
+  });
+
+  // 注入提示气泡
+  const innerDiv = row.querySelector('div[style]');
+  if (innerDiv && !innerDiv.querySelector('.select-mode-tip')) {
+    const tip = document.createElement('div');
+    tip.className = 'select-mode-tip';
+    tip.textContent = '点击段落选择要推送的内容';
+    innerDiv.appendChild(tip);
+  }
+
+  // 在消息下方插入确认条
+  const bar = document.createElement('div');
+  bar.className = 'select-confirm-bar active';
+  bar.id = 'selectConfirmBar';
+  bar.innerHTML = `
+    <span class="sc-count">已选 <strong id="scCount">0</strong> 段</span>
+    <span class="sc-hint">点击段落选择要订阅的内容</span>
+    <button class="sc-btn cancel" onclick="exitSelectMode()">取消</button>
+    <button class="sc-btn confirm" id="scConfirmBtn" onclick="confirmSelected()" disabled>确认订阅</button>
+  `;
+  row.parentNode.insertBefore(bar, row.nextSibling);
+  updateSelectBar();
+  // 滚动到确认条位置，保证可见
+  bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function toggleParagraph(p) {
+  p.classList.toggle('selected');
+  updateSelectBar();
+}
+
+function updateSelectBar() {
+  if (!selectModeRow) return;
+  const bar = document.getElementById('selectConfirmBar');
+  if (!bar) return;
+  const selected = selectModeRow.querySelectorAll('.msg-bubble p.selected');
+  const count = selected.length;
+  const countEl = bar.querySelector('#scCount');
+  const btn = bar.querySelector('#scConfirmBtn');
+  if (countEl) countEl.textContent = count;
+  if (btn) btn.disabled = count === 0;
+}
+
+function exitSelectMode() {
+  if (!selectModeRow) return;
+  selectModeRow.classList.remove('selecting');
+  // 清除段落点击和选中状态
+  selectModeRow.querySelectorAll('.msg-bubble p').forEach(p => {
+    p.classList.remove('selected');
+    p.onclick = null;
+  });
+  // 移除提示气泡
+  const tip = selectModeRow.querySelector('.select-mode-tip');
+  if (tip) tip.remove();
+
+  // 移除确认条
+  const bar = document.getElementById('selectConfirmBar');
+  if (bar) bar.remove();
+
+  selectModeRow = null;
+}
+
+function confirmSelected() {
+  if (!selectModeRow) return;
+  const selected = selectModeRow.querySelectorAll('.msg-bubble p.selected');
+  if (selected.length === 0) return;
+
+  // 拼接选中内容传给订阅弹窗
+  const contentHtml = Array.from(selected).map(p => p.outerHTML).join('');
+  exitSelectMode();
+  openSubModal(contentHtml);
+}
+
+// ====== 订阅功能 ======
+const SUB_STORAGE_KEY = 'creatiads_subscriptions';
+let subscriptions = [];
+let subCurrentContent = '';
+let currentFreq = 'daily'; // 'daily' | 'weekly' | 'monthly'
+
+// 初始化每月日期选项
+function initMonthdaySelect() {
+  const sel = document.getElementById('subMonthdaySelect');
+  if (!sel || sel.options.length > 0) return;
+  for (let i = 1; i <= 28; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${i} 日`;
+    sel.appendChild(opt);
+  }
+}
+
+function selectFreq(freq) {
+  currentFreq = freq;
+  document.querySelectorAll('.sub-freq-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.freq === freq);
+  });
+  const weekday = document.getElementById('subWeekdaySelect');
+  const monthday = document.getElementById('subMonthdaySelect');
+  weekday.style.display = freq === 'weekly' ? 'block' : 'none';
+  monthday.style.display = freq === 'monthly' ? 'block' : 'none';
+}
+
+function getFreqLabel(sub) {
+  const weekNames = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  if (sub.freq === 'weekly') return `每周${weekNames[sub.weekday] || ''} ${sub.time}`;
+  if (sub.freq === 'monthly') return `每月 ${sub.monthday} 日 ${sub.time}`;
+  return `每日 ${sub.time}`;
+}
+
+function loadSubscriptions() {
+  try {
+    const raw = localStorage.getItem(SUB_STORAGE_KEY);
+    if (raw) subscriptions = JSON.parse(raw);
+    // 兼容修正：老数据里可能有语音输入误识别的"没人"，统一改回"每日"
+    let dirty = false;
+    subscriptions.forEach(s => {
+      if (s && typeof s.name === 'string' && s.name.includes('没人')) {
+        s.name = s.name.replace(/没人/g, '每日');
+        dirty = true;
+      }
+    });
+    if (dirty) localStorage.setItem(SUB_STORAGE_KEY, JSON.stringify(subscriptions));
+  } catch(e) { subscriptions = []; }
+}
+
+function saveSubscriptions() {
+  localStorage.setItem(SUB_STORAGE_KEY, JSON.stringify(subscriptions));
+  updateSubBadge();
+  renderMySkills();
+}
+
+function updateSubBadge() {
+  const active = subscriptions.filter(s => s.enabled).length;
+  ['subCountBadge', 'mySubFabBadge'].forEach(id => {
+    const badge = document.getElementById(id);
+    if (!badge) return;
+    if (active > 0) {
+      badge.textContent = active;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  });
+}
+
+// ====== 欢迎页：我订阅的分析（混入通用模板网格） ======
+function skillIconSvg(sub) {
+  const topic = (sub.meta && sub.meta.topic) || sub.name || '';
+  // 图标风格与通用卡片保持一致（20px stroke=2）
+  if (/素材|creative/i.test(topic)) {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+  }
+  if (/账户|account/i.test(topic)) {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>';
+  }
+  if (/ctr|点击率/i.test(topic)) {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9l3 3 8-8"/><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+  }
+  if (/cpa|花费|预算|cost/i.test(topic)) {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+  }
+  // 默认：趋势
+  return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
+}
+
+function renderMySkills() {
+  const grid = document.getElementById('mineGrid');
+  const tabMine = document.getElementById('tabMine');
+  const tabCount = document.getElementById('tabMineCount');
+  const manageBtn = document.getElementById('manageSubBtn');
+  if (!grid) return;
+
+  const hasSub = subscriptions && subscriptions.length > 0;
+
+  if (tabMine) tabMine.style.display = hasSub ? 'inline-flex' : 'none';
+  if (tabCount) tabCount.textContent = subscriptions.length;
+
+  if (!hasSub) {
+    grid.innerHTML = '';
+    // 无订阅时强制回到通用模板
+    switchQuickTab('templates', true);
+    return;
+  }
+
+  // 启用的排前面
+  const list = [...subscriptions]
+    .sort((a, b) => Number(b.enabled) - Number(a.enabled));
+
+  grid.innerHTML = list.map(sub => {
+    const topic = (sub.meta && sub.meta.topic) || getFreqLabel(sub);
+    return `
+      <div class="action-card action-card--subscribed${sub.enabled ? '' : ' paused'}"
+           onclick="runSkill(${sub.id})"
+           title="立即运行「${escapeHtml(sub.name)}」">
+        <span class="subscribe-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          ${sub.enabled ? '订阅' : '已暂停'}
+        </span>
+        <div class="action-icon">${skillIconSvg(sub)}</div>
+        <div class="action-title">${escapeHtml(sub.name)}</div>
+        <div class="action-subtitle">${escapeHtml(topic)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Tab 切换
+let _quickTabInited = false;
+function switchQuickTab(name, silent) {
+  document.querySelectorAll('.quick-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.panel === name);
+  });
+  document.querySelectorAll('.quick-panel').forEach(p => {
+    p.classList.toggle('active', p.id === (name === 'mine' ? 'quickPanelMine' : 'quickPanelTemplates'));
+  });
+  if (!silent) _quickTabInited = true;
+}
+
+// 立即运行一条订阅：生成 prompt 并发送给 Agent
+function runSkill(id) {
+  const sub = subscriptions.find(s => s.id === id);
+  if (!sub) return;
+  const meta = sub.meta || {};
+  const parts = [];
+  if (meta.topic) parts.push(meta.topic);
+  if (meta.timeWindow) parts.push(meta.timeWindow);
+  if (meta.dataScope) parts.push(meta.dataScope);
+  if (meta.depth) parts.push(`分析深度：${meta.depth}`);
+  const prompt = parts.length
+    ? `按订阅「${sub.name}」立即分析一次：${parts.join('，')}。重点识别涨跌异常指标并给出归因结论。`
+    : `按订阅「${sub.name}」立即分析一次，重点识别涨跌异常指标并给出归因结论。`;
+  const input = document.getElementById('chatInput');
+  input.value = prompt;
+  sendMessage();
+}
+
+function openSubModal(contentText, meta) {
+  initMonthdaySelect();
+  subCurrentContent = contentText || '';
+  // 生成或使用传入的分析逻辑摘要
+  const m = meta || generateAnalysisMeta(contentText);
+  renderAnalysisMeta(m);
+  // 渲染上次分析结果（折叠）—— 新建订阅时才展示"首次分析结果"折叠区
+  const lastResultEl = document.getElementById('subLastResult');
+  const lastContentEl = document.getElementById('subLastResultContent');
+  const plainText = contentText.replace(/<[^>]+>/g, '');
+  const paragraphs = plainText.split(/\n+/).filter(s => s.trim());
+  lastContentEl.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+  lastResultEl.style.display = paragraphs.length ? '' : 'none';
+  // 隐藏「段落编辑」区（新建订阅不需要）
+  const editWrap = document.getElementById('subEditParagraphs');
+  if (editWrap) editWrap.style.display = 'none';
+  // 重置表单
+  document.getElementById('subNameInput').value = m.topic || '';
+  document.getElementById('subTimeInput').value = '09:00';
+  selectFreq('daily');
+  // 重置确认按钮
+  document.querySelector('#subModal .sub-btn.primary').onclick = confirmSubscribe;
+  document.getElementById('subModal').classList.add('active');
+}
+
+function closeSubModal() {
+  document.getElementById('subModal').classList.remove('active');
+  // 折叠上次结论
+  const toggle = document.querySelector('#subLastResult .sub-last-result-toggle');
+  const body = document.querySelector('#subLastResult .sub-last-result-body');
+  if (toggle) toggle.classList.remove('open');
+  if (body) body.classList.remove('open');
+  // 关闭编辑段落区
+  const editWrap = document.getElementById('subEditParagraphs');
+  if (editWrap) editWrap.style.display = 'none';
+}
+
+function generateAnalysisMeta(contentHtml) {
+  const text = (contentHtml || '').replace(/<[^>]+>/g, '');
+  // 分析主题
+  let topic = 'ROAS 变化归因分析';
+  if (/cpa/i.test(text) && !/roas/i.test(text)) topic = 'CPA 效率异常分析';
+  else if (/ctr|点击率/.test(text) && !/roas/i.test(text)) topic = 'CTR 趋势异常分析';
+  else if (/素材|creative/i.test(text)) topic = '素材效果归因分析';
+  else if (/账户|account/i.test(text) && !/roas/i.test(text)) topic = '账户维度对比分析';
+  // 关注指标：自动识别异常指标
+  const focusMode = 'anomaly';
+  // 分析深度
+  let depth = '3 层下钻：大盘 → 账户 → 广告系列';
+  if (/素材|creative/i.test(text)) depth = '4 层下钻：大盘 → 账户 → 广告系列 → 素材';
+  else if (/账户|account/i.test(text)) depth = '2 层下钻：大盘 → 账户';
+  // 时间窗口
+  let timeWindow = '对比昨日 vs 前日';
+  if (/6.*13|6月13/.test(text)) timeWindow = '6/12 vs 6/13 单日对比';
+  else if (/7天|7 天/.test(text)) timeWindow = '最近 7 天趋势';
+  else if (/30天|30 天/.test(text)) timeWindow = '最近 30 天趋势';
+  return { topic, focusMode, depth, timeWindow, dataScope: '全账户 · 58 个账户' };
+}
+
+function renderAnalysisMeta(meta) {
+  const el = document.getElementById('subAnalysisMeta');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="sub-meta-row">
+      <span class="sub-meta-label">分析主题</span>
+      <span class="sub-meta-value">${meta.topic || '—'}</span>
+    </div>
+    <div class="sub-meta-row">
+      <span class="sub-meta-label">数据范围</span>
+      <span class="sub-meta-value">${meta.dataScope || '全账户'}</span>
+    </div>
+    <div class="sub-meta-row">
+      <span class="sub-meta-label">关注指标</span>
+      <span class="sub-meta-value">
+        <span class="sub-meta-tag anomaly">异常指标（自动识别）</span>
+        <span class="sub-meta-hint">每次运行自动筛选涨跌异常的指标</span>
+      </span>
+    </div>
+    <div class="sub-meta-row">
+      <span class="sub-meta-label">分析深度</span>
+      <span class="sub-meta-value">${meta.depth || '—'}</span>
+    </div>
+    <div class="sub-meta-row">
+      <span class="sub-meta-label">时间窗口</span>
+      <span class="sub-meta-value">${meta.timeWindow || '—'}</span>
+    </div>
+  `;
+}
+
+function toggleLastResult(btn) {
+  const body = btn.nextElementSibling;
+  btn.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+function confirmSubscribe() {
+  const name = document.getElementById('subNameInput').value.trim() || '每日广告报告';
+  const time = document.getElementById('subTimeInput').value || '09:00';
+  const weekday = parseInt(document.getElementById('subWeekdaySelect').value);
+  const monthday = parseInt(document.getElementById('subMonthdaySelect').value) || 1;
+  const meta = generateAnalysisMeta(subCurrentContent);
+  const sub = {
+    id: Date.now(),
+    name,
+    freq: currentFreq,
+    time,
+    weekday,
+    monthday,
+    content: subCurrentContent,
+    meta,
+    enabled: true,
+    createdAt: new Date().toLocaleDateString('zh-CN')
+  };
+  subscriptions.unshift(sub);
+  saveSubscriptions();
+  closeSubModal();
+  showToast('订阅成功！将于' + getFreqLabel(sub) + ' 推送到飞书', true);
+}
+
+function openSubPanel() {
+  renderSubPanel();
+  document.getElementById('subPanel').classList.add('active');
+}
+
+function closeSubPanel() {
+  document.getElementById('subPanel').classList.remove('active');
+}
+
+function renderSubPanel() {
+  const body = document.getElementById('subPanelBody');
+  if (subscriptions.length === 0) {
+    body.innerHTML = `
+      <div class="sub-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span>暂无订阅报告</span>
+        <span style="font-size:12px;color:#d1d5db;">在 Agent 回答后点击「订阅此报告」添加</span>
+      </div>`;
+    return;
+  }
+  body.innerHTML = subscriptions.map(sub => {
+    const meta = sub.meta || {};
+    return `
+    <div class="sub-item" id="subItem${sub.id}">
+      <div class="sub-item-header">
+        <div class="sub-item-name">${escapeHtml(sub.name)}</div>
+        <button class="sub-item-toggle ${sub.enabled ? 'on' : ''}" onclick="toggleSub(${sub.id})" title="${sub.enabled ? '点击暂停' : '点击启用'}"></button>
+      </div>
+      <div style="padding:0 2px;margin-bottom:6px;">
+        <div style="font-size:11.5px;color:#374151;font-weight:500;margin-bottom:3px;">${meta.topic || sub.name}</div>
+        <div style="font-size:10.5px;color:#9ca3af;">异常指标（自动识别）</div>
+      </div>
+      <div class="sub-item-meta">
+        <span class="sub-item-tag">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          ${getFreqLabel(sub)}
+        </span>
+        <span class="sub-item-tag">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="4" rx="0.5"/><rect x="10" y="3" width="4" height="4" rx="0.5"/><rect x="3" y="10" width="4" height="4" rx="0.5"/><rect x="10" y="10" width="4" height="4" rx="0.5"/></svg>
+          飞书
+        </span>
+        <span style="margin-left:auto;font-size:11px;color:#d1d5db;">${sub.createdAt}</span>
+      </div>
+      <div class="sub-item-actions">
+        <button class="sub-item-action-btn" onclick="editSub(${sub.id})">编辑</button>
+        <button class="sub-item-action-btn delete" onclick="deleteSub(${sub.id})">删除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSub(id) {
+  const sub = subscriptions.find(s => s.id === id);
+  if (!sub) return;
+  sub.enabled = !sub.enabled;
+  saveSubscriptions();
+  renderSubPanel();
+}
+
+function deleteSub(id) {
+  subscriptions = subscriptions.filter(s => s.id !== id);
+  saveSubscriptions();
+  renderSubPanel();
+  showToast('已删除订阅');
+}
+
+// 把订阅的 content(HTML) 拆成段落数组
+function splitSubContentToParagraphs(html) {
+  if (!html) return [];
+  // 优先按 <p>...</p> 拆
+  const pMatches = html.match(/<p[^>]*>[\s\S]*?<\/p>/gi);
+  if (pMatches && pMatches.length) return pMatches;
+  // 退化：按空行拆纯文本，再包一层 <p>
+  const plain = html.replace(/<[^>]+>/g, '').split(/\n{2,}|\n/).map(s => s.trim()).filter(Boolean);
+  return plain.map(t => `<p>${t}</p>`);
+}
+
+function renderEditParagraphs(paragraphs) {
+  const wrap = document.getElementById('subEditParagraphs');
+  const list = document.getElementById('subEditParagraphsList');
+  const hint = document.getElementById('subEditParagraphsHint');
+  if (!wrap || !list) return;
+  wrap.style.display = '';
+  list.innerHTML = '';
+
+  const single = paragraphs.length <= 1;
+  paragraphs.forEach((html, idx) => {
+    const card = document.createElement('div');
+    card.className = 'sub-edit-paragraph-card' + (single ? ' locked' : '');
+    card.dataset.idx = String(idx);
+    card.innerHTML = html;
+    if (!single) {
+      card.addEventListener('click', () => {
+        // 保留至少一段
+        const keptCount = list.querySelectorAll('.sub-edit-paragraph-card:not(.removed)').length;
+        const isRemoved = card.classList.contains('removed');
+        if (!isRemoved && keptCount <= 1) {
+          hint.classList.add('warn');
+          hint.textContent = '至少保留一段';
+          setTimeout(() => {
+            hint.classList.remove('warn');
+            hint.textContent = '点击段落可移除，至少保留一段';
+          }, 1500);
+          return;
+        }
+        card.classList.toggle('removed');
+      });
+    }
+    list.appendChild(card);
+  });
+
+  if (single) {
+    hint.classList.remove('warn');
+    hint.textContent = '当前只有一段，若需调整内容请回原对话重新订阅';
+  } else {
+    hint.classList.remove('warn');
+    hint.textContent = '点击段落可移除，至少保留一段';
+  }
+}
+
+function editSub(id) {
+  const sub = subscriptions.find(s => s.id === id);
+  if (!sub) return;
+  initMonthdaySelect();
+  closeSubPanel();
+  subCurrentContent = sub.content || '';
+
+  // 渲染分析逻辑摘要（用已有 meta 或重新生成）
+  const meta = sub.meta || generateAnalysisMeta(sub.content);
+  renderAnalysisMeta(meta);
+
+  // 编辑模式：隐藏「首次分析结果」折叠区，改用可编辑的段落卡片
+  const lastResultEl = document.getElementById('subLastResult');
+  if (lastResultEl) lastResultEl.style.display = 'none';
+
+  const paragraphs = splitSubContentToParagraphs(sub.content);
+  renderEditParagraphs(paragraphs);
+
+  document.getElementById('subNameInput').value = sub.name;
+  document.getElementById('subTimeInput').value = sub.time || '09:00';
+  selectFreq(sub.freq || 'daily');
+  if (sub.freq === 'weekly') document.getElementById('subWeekdaySelect').value = sub.weekday ?? 1;
+  if (sub.freq === 'monthly') document.getElementById('subMonthdaySelect').value = sub.monthday ?? 1;
+
+  document.querySelector('#subModal .sub-btn.primary').onclick = function() {
+    sub.name = document.getElementById('subNameInput').value.trim() || sub.name;
+    sub.freq = currentFreq;
+    sub.time = document.getElementById('subTimeInput').value || sub.time;
+    sub.weekday = parseInt(document.getElementById('subWeekdaySelect').value);
+    sub.monthday = parseInt(document.getElementById('subMonthdaySelect').value) || 1;
+    sub.meta = meta;
+
+    // 收集未移除段落 → 重组 content
+    const kept = Array.from(document.querySelectorAll('#subEditParagraphsList .sub-edit-paragraph-card:not(.removed)'))
+      .map(el => el.innerHTML.trim())
+      .filter(Boolean);
+    if (kept.length) {
+      sub.content = kept.map(h => (/<p[\s>]/i.test(h) ? h : `<p>${h}</p>`)).join('');
+    }
+
+    saveSubscriptions();
+    closeSubModal();
+    document.querySelector('#subModal .sub-btn.primary').onclick = confirmSubscribe;
+    showToast('订阅已更新');
+  };
+
+  document.getElementById('subModal').classList.add('active');
+}
+
+function showToast(msg, withViewAction) {
+  const t = document.getElementById('subToast');
+  const actionHtml = withViewAction ? `<span class="sub-toast-action" onclick="openSubPanel();document.getElementById('subToast').classList.remove('show');">查看订阅 →</span>` : '';
+  t.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> <span>${msg}</span>${actionHtml}`;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), withViewAction ? 5000 : 3000);
+}
+
+// 点弹窗背景关闭
+document.getElementById('subModal').addEventListener('click', e => { if (e.target.id === 'subModal') closeSubModal(); });
+document.getElementById('subPanel').addEventListener('click', e => { if (e.target.id === 'subPanel') closeSubPanel(); });
+
+loadSubscriptions();
+updateSubBadge();
+renderMySkills();
+
+// 在 iframe 中时隐藏自身侧边栏（由 index.html 的侧边栏替代）
+try {
+  if (window.self !== window.top) {
+    document.querySelector('.sidebar').style.display = 'none';
+  }
+} catch(e) {
+  document.querySelector('.sidebar').style.display = 'none';
+}
+
+/* ===== Agent Tour 逻辑 ===== */
+let agentTourStep = 0;
+let agentTourScenario = 'report'; // 'report' | 'analysis'
+
+const AGENT_TOUR_STEPS_REPORT = [
+  { badge: 'Agent 生成报表 · 1/2', desc: '在下方对话框中输入你的报表需求，系统已为你预填了一条示例问题，Agent 会自动理解需求并帮你生成报表。', targetId: 'chatInput', position: 'top' },
+  { badge: 'Agent 生成报表 · 2/2', desc: '点击右侧发送按钮，Agent 会自动分析需求、调用数据接口，直接生成可查看的广告效果报表。', targetId: 'sendBtn', position: 'top' }
+];
+const AGENT_TOUR_STEPS_ANALYSIS = [
+  { badge: 'Agent 分析数据 · 1/2', desc: '在下方对话框中输入你的分析问题，系统已为你预填了一条示例问题，Agent 会结合你的广告数据给出洞察和优化建议。', targetId: 'chatInput', position: 'top' },
+  { badge: 'Agent 分析数据 · 2/2', desc: '点击发送，Agent 会自动拉取相关数据、识别规律，并给出具体的优化方向和建议。', targetId: 'sendBtn', position: 'top' }
+];
+
+function getAgentTourSteps() {
+  return agentTourScenario === 'analysis' ? AGENT_TOUR_STEPS_ANALYSIS : AGENT_TOUR_STEPS_REPORT;
+}
+
+function beginAgentTour() {
+  agentTourStep = 0;
+  // 注入 tour 样式（如果还没有）
+  if (!document.getElementById('agentTourStyle')) {
+    const s = document.createElement('style');
+    s.id = 'agentTourStyle';
+    s.textContent = `
+      #agentTourTooltip { position:fixed;background:white;border:1px solid hsl(214.3 31.8% 91.4%);border-radius:12px;padding:22px;max-width:360px;box-shadow:0 10px 40px rgba(0,0,0,0.15);z-index:10000;display:none; }
+      #agentTourTooltip.active { display:block;animation:agentTipIn .25s ease; }
+      @keyframes agentTipIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+      #agentTourHighlight { position:fixed;border:3px solid #374151;border-radius:8px;box-shadow:0 0 0 4px rgba(0,0,0,0.06),0 0 20px rgba(0,0,0,0.12);pointer-events:none;z-index:9999; }
+    `;
+    document.head.appendChild(s);
+  }
+  // 注入 tooltip HTML（如果还没有）
+  if (!document.getElementById('agentTourTooltip')) {
+    const div = document.createElement('div');
+    div.id = 'agentTourTooltip';
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span id="agentTourBadge" style="background:linear-gradient(135deg,#374151,#111827);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;"></span>
+      </div>
+      <p id="agentTourDesc" style="font-size:13px;line-height:1.6;color:#374151;margin-bottom:18px;"></p>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <button onclick="skipAgentTour()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:13px;">跳过引导</button>
+        <div style="display:flex;gap:8px;">
+          <button id="agentTourPrev" onclick="prevAgentTourStep()" style="height:34px;padding:0 14px;border:1.5px solid hsl(214.3 31.8% 91.4%);border-radius:7px;background:white;cursor:pointer;font-size:13px;display:none;">上一步</button>
+          <button id="agentTourNext" onclick="nextAgentTourStep()" style="height:34px;padding:0 18px;border:none;border-radius:7px;background:#111827;color:white;cursor:pointer;font-size:13px;font-weight:600;">下一步</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(div);
+  }
+  if (!document.getElementById('agentTourHighlight')) {
+    const hl = document.createElement('div');
+    hl.id = 'agentTourHighlight';
+    hl.style.display = 'none';
+    document.body.appendChild(hl);
+  }
+  renderAgentTourStep();
+}
+
+function renderAgentTourStep() {
+  const steps = getAgentTourSteps();
+  if (agentTourStep >= steps.length) { endAgentTour(); return; }
+  const s = steps[agentTourStep];
+  document.getElementById('agentTourBadge').textContent = s.badge;
+  document.getElementById('agentTourDesc').textContent = s.desc;
+  document.getElementById('agentTourPrev').style.display = agentTourStep > 0 ? 'inline-flex' : 'none';
+  document.getElementById('agentTourNext').textContent = agentTourStep === steps.length - 1 ? '完成' : '下一步';
+  // 定位
+  const targetEl = document.getElementById(s.targetId);
+  const tooltip = document.getElementById('agentTourTooltip');
+  const hl = document.getElementById('agentTourHighlight');
+  if (targetEl) {
+    const r = targetEl.getBoundingClientRect(), p = 6;
+    hl.style.cssText = `display:block;left:${r.left-p}px;top:${r.top-p}px;width:${r.width+p*2}px;height:${r.height+p*2}px;`;
+    const ttW = 340, ttH = 170;
+    let l = Math.max(12, Math.min(r.left + r.width/2 - ttW/2, window.innerWidth - ttW - 12));
+    // 优先显示在元素上方，空间不足才显示在下方
+    let t = r.top - ttH - 16;
+    if (t < 12) t = r.bottom + 12;
+    // 如果下方也超出屏幕，强制显示在上方并夹在可视区内
+    if (t + ttH > window.innerHeight - 12) t = Math.max(12, r.top - ttH - 16);
+    tooltip.style.cssText = `display:block;left:${l}px;top:${t}px;max-width:${ttW}px;right:auto;bottom:auto;transform:none;`;
+  } else {
+    hl.style.display = 'none';
+    tooltip.style.cssText = 'display:block;left:50%;top:50%;transform:translate(-50%,-50%);max-width:340px;';
+  }
+  tooltip.classList.add('active');
+}
+
+function nextAgentTourStep() {
+  const steps = getAgentTourSteps();
+  if (agentTourStep >= steps.length - 1) { endAgentTour(); return; }
+  agentTourStep++;
+  renderAgentTourStep();
+}
+
+function prevAgentTourStep() {
+  if (agentTourStep <= 0) return;
+  agentTourStep--;
+  renderAgentTourStep();
+}
+
+function skipAgentTour() { endAgentTour(); }
+
+function endAgentTour() {
+  const tooltip = document.getElementById('agentTourTooltip');
+  if (tooltip) { tooltip.classList.remove('active'); tooltip.style.display = 'none'; }
+  const hl = document.getElementById('agentTourHighlight');
+  if (hl) hl.style.display = 'none';
+}
+
+// 点击用户引导按钮：通知父窗口切换到 auto-report 并打开欢迎弹窗
+function openGuideFromAgent() {
+  try {
+    window.parent.postMessage({ type: 'creatiads-open-guide' }, '*');
+  } catch(e) {}
+}
+
+// 监听父窗口消息，启动 tour
+window.addEventListener('message', (e) => {
+  if (!e.data || e.data.type !== 'creatiads-agent-tour') return;
+  agentTourScenario = e.data.scenario === 'agent-analysis' ? 'analysis' : 'report';
+  // 填充示例 prompt
+  const input = document.getElementById('chatInput');
+  if (input && e.data.prompt) input.value = e.data.prompt;
+  setTimeout(beginAgentTour, 200);
+});
+</script>
+</body>
+</html>

@@ -471,31 +471,108 @@ function setupTabs() {
 
 /* ===== 侧边栏交互 ===== */
 function setupSidebar() {
+    // 一级导航映射：nav-item.data-key -> switchPage(key)
+    const NAV_ITEM_MAP = {
+        dashboard: 'dashboard',
+        data: 'autoReport',           // 自动报表
+        bi: 'bi',
+        agent: 'agent',
+        'ad-studio': 'ad-studio',     // 自动化广告创编
+        creation: 'creation',         // 智能素材分析
+        monitoring: 'monitoring',     // 广告总览 Beta
+    };
+
     document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', () => {
+        const key = item.dataset.key;
+        item.addEventListener('click', (e) => {
+            // 「数据源管理」父项：只做展开/收起
+            if (key === 'sourcesGroup') {
+                item.classList.toggle('open');
+                const sublist = document.getElementById('navSourcesGroup');
+                if (sublist) sublist.classList.toggle('open');
+                return;
+            }
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.nav-subitem').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
-            const key = item.dataset.key;
-            if (key === 'dashboard') {
+            const target = NAV_ITEM_MAP[key];
+            if (target) {
                 document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('active'));
-                switchPage('dashboard');
-            } else if (key === 'bi') {
-                switchPage('bi');
-            } else if (key === 'data') {
-                switchPage('autoReport');
-            } else if (key === 'admin') {
-                document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('active'));
-                switchPage('admin');
+                switchPage(target);
             }
         });
     });
 
-    // Data 侧边栏子项
+    // 一级子项：媒体平台数据源 / 平台连接器 / 数据同步 / 数据集
+    const NAV_SUB_MAP = {
+        sources: 'sources',
+        connectors: 'connectors',
+        destinations: 'destinations',
+        datasets: 'datasets',
+    };
+    document.querySelectorAll('.nav-subitem').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.nav-subitem').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            // 父项高亮
+            const parent = document.querySelector('.nav-item--parent[data-key="sourcesGroup"]');
+            if (parent) {
+                parent.classList.add('open');
+                const sublist = document.getElementById('navSourcesGroup');
+                if (sublist) sublist.classList.add('open');
+            }
+            const target = NAV_SUB_MAP[item.dataset.key];
+            if (target) switchPage(target);
+        });
+    });
+
+    // 底部用户菜单展开/收起
+    const userBtn = document.getElementById('userMenuBtn');
+    const userPop = document.getElementById('userMenuPopover');
+    if (userBtn && userPop) {
+        userBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const opening = !userPop.classList.contains('show');
+            userPop.classList.toggle('show', opening);
+            userBtn.classList.toggle('open', opening);
+        });
+        document.addEventListener('click', (e) => {
+            if (!userPop.contains(e.target) && !userBtn.contains(e.target)) {
+                userPop.classList.remove('show');
+                userBtn.classList.remove('open');
+            }
+        });
+        // 用户菜单里的项
+        userPop.querySelectorAll('.user-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const k = item.dataset.key;
+                userPop.classList.remove('show');
+                userBtn.classList.remove('open');
+                if (k === 'admin') {
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    document.querySelectorAll('.nav-subitem').forEach(i => i.classList.remove('active'));
+                    switchPage('admin');
+                }
+            });
+        });
+    }
+
+    // 二级 Data 侧边栏子项（保留兼容 auto-report iframe 场景，虽然当前不显示二级栏）
     document.querySelectorAll('.sub-item[data-key]').forEach(item => {
         item.addEventListener('click', () => {
             document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
             switchPage(item.dataset.key);
+        });
+    });
+
+    // Agent 二级栏最近对话项
+    document.querySelectorAll('.agent-conv-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.agent-conv-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
         });
     });
 
@@ -593,7 +670,9 @@ function switchPage(key) {
     const dataSidebar = document.getElementById('dataSidebar');
     const dashboardSidebar = document.getElementById('dashboardSidebar');
     const biSidebar = document.getElementById('biSidebar');
+    const agentSidebar = document.getElementById('agentSidebar');
     const adminPage = document.getElementById('adminPage');
+    const agentPage = document.getElementById('agentPage');
     const sidebarSecondary = document.querySelector('.sidebar-secondary');
 
     autoReportPage.style.display = 'none';
@@ -605,33 +684,44 @@ function switchPage(key) {
     dataSidebar.style.display = 'none';
     dashboardSidebar.style.display = 'none';
     biSidebar.style.display = 'none';
+    if (agentSidebar) agentSidebar.style.display = 'none';
     if (adminPage) adminPage.style.display = 'none';
-    // 默认显示二级侧边栏（admin 全屏页面会显式隐藏）
-    if (sidebarSecondary) sidebarSecondary.style.display = '';
+    if (agentPage) agentPage.style.display = 'none';
+    // 默认隐藏二级侧边栏；仅 Dashboard/BI/Agent 显示自己的
+    if (sidebarSecondary) sidebarSecondary.style.display = 'none';
 
     if (key === 'autoReport') {
         autoReportPage.style.display = '';
-        dataSidebar.style.display = '';
+        // 一级导航已直达自动报表，隐藏二级栏
+        if (sidebarSecondary) sidebarSecondary.style.display = 'none';
     } else if (key === 'connectors') {
         connectorsPage.style.display = '';
-        dataSidebar.style.display = '';
+        if (sidebarSecondary) sidebarSecondary.style.display = 'none';
     } else if (key === 'sources') {
         sourcesPage.style.display = '';
-        dataSidebar.style.display = '';
+        if (sidebarSecondary) sidebarSecondary.style.display = 'none';
     } else if (key === 'sourceDetail') {
         sourceDetailPage.style.display = '';
-        dataSidebar.style.display = '';
+        if (sidebarSecondary) sidebarSecondary.style.display = 'none';
+    } else if (key === 'destinations' || key === 'datasets' || key === 'ad-studio' || key === 'creation' || key === 'monitoring') {
+        if (sidebarSecondary) sidebarSecondary.style.display = 'none';
+        // TODO: 未实现的页面用占位提示
+        alert(`\u300C${key}\u300D\u9875\u9762\u6B63\u5728\u5F00\u53D1\u4E2D`);
     } else if (key === 'dashboard') {
         dashboardPage.style.display = '';
         dashboardSidebar.style.display = '';
+        if (sidebarSecondary) sidebarSecondary.style.display = '';
     } else if (key === 'bi') {
         biPage.style.display = '';
         biSidebar.style.display = '';
+        if (sidebarSecondary) sidebarSecondary.style.display = '';
     } else if (key === 'admin') {
         if (adminPage) adminPage.style.display = '';
-        if (sidebarSecondary) sidebarSecondary.style.display = 'none';
+    } else if (key === 'agent') {
+        if (agentPage) agentPage.style.display = '';
+        if (agentSidebar) agentSidebar.style.display = '';
+        if (sidebarSecondary) sidebarSecondary.style.display = '';
     } else {
-        dataSidebar.style.display = '';
         alert(`\u300C${key}\u300D\u9875\u9762\u6B63\u5728\u5F00\u53D1\u4E2D`);
     }
 }
@@ -927,6 +1017,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCustomSelects();
     setupDashboard();
     setupBI();
+    // 默认打开自动报表（data 一级项 active，二级栏隐藏）
+    switchPage('autoReport');
 });
 
 /* ===== iframe 跨窗口消息监听（Auto Report → 授权页 / 导航切换 / 显示报表） ===== */
@@ -951,7 +1043,36 @@ window.addEventListener('message', (event) => {
             document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('active'));
             const arItem = document.querySelector('.sub-item[data-key="autoReport"]');
             if (arItem) arItem.classList.add('active');
+        } else if (target === 'agent') {
+            // 切换到 agent 页
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            const agentItem = document.querySelector('.nav-item[data-key="agent"]');
+            if (agentItem) agentItem.classList.add('active');
+            switchPage('agent');
+            // 向 agent iframe 发送 tour 启动消息
+            setTimeout(() => {
+                const agentFrame = document.getElementById('agentFrame');
+                if (agentFrame && agentFrame.contentWindow) {
+                    agentFrame.contentWindow.postMessage({
+                        type: 'creatiads-agent-tour',
+                        scenario: event.data.scenario,
+                        prompt: event.data.agentPrompt
+                    }, '*');
+                }
+            }, 300);
         }
+    } else if (event.data.type === 'creatiads-open-guide') {
+        // agent 页点「用户引导」→ 切换到 auto-report 并打开欢迎弹窗
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        const dataItem = document.querySelector('.nav-item[data-key="data"]');
+        if (dataItem) dataItem.classList.add('active');
+        switchPage('autoReport');
+        setTimeout(() => {
+            const arFrame = document.getElementById('autoReportFrame');
+            if (arFrame && arFrame.contentWindow) {
+                arFrame.contentWindow.postMessage({ type: 'creatiads-open-welcome' }, '*');
+            }
+        }, 300);
     }
 });
 

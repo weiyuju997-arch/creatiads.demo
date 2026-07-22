@@ -154,6 +154,25 @@
   }
   /* 隐藏左侧导航，仅保留主内容区 */
   #primaryNav, #secondaryNav { display: none !important; }
+
+  /* ===== 用户引导 ===== */
+  #tourOverlay { position:fixed;inset:0;z-index:9998;display:none; }
+  #tourOverlay.active { display:block; }
+  .tour-highlight { position:fixed;border:3px solid #2dd4bf;border-radius:8px;box-shadow:0 0 0 4px rgba(45,212,191,0.15),0 0 20px rgba(45,212,191,0.35);pointer-events:none;z-index:9999;transition:all .3s ease; }
+  #tourTooltip { position:fixed;background:white;border:1px solid hsl(214.3 31.8% 91.4%);border-radius:12px;padding:24px;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,0.15);z-index:10000;display:none;transition:all .25s ease; }
+  #guideFab { position:fixed;top:16px;right:24px;height:38px;padding:0 16px;background:linear-gradient(135deg,#2dd4bf,#14b8a6);color:white;border:none;border-radius:19px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(20,184,166,.4);z-index:999;display:flex;align-items:center;gap:6px;transition:all .2s; }
+  #guideFab:hover { transform:translateY(-1px);box-shadow:0 6px 18px rgba(20,184,166,.5); }
+  #welcomeModal { position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:10001;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px); }
+  #welcomeModal.active { display:flex;animation:fadeIn .2s ease; }
+  #welcomeModal .wm-box { background:white;border-radius:16px;padding:32px;max-width:660px;width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:modalIn .25s ease; }
+  .scene-card { border:1.5px solid hsl(214.3 31.8% 91.4%);border-radius:12px;padding:20px;background:#fafafa;position:relative;transition:border-color .2s,background .2s;cursor:default; }
+  .scene-card:hover { border-color:#2dd4bf;background:#f0fdfa; }
+  .scene-card .scene-badge { background:#e5e7eb;color:#374151;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;transition:background .2s,color .2s; }
+  .scene-card:hover .scene-badge { background:#ccfbf1;color:#0f766e; }
+  .scene-card .scene-title { color:#374151;transition:color .2s; }
+  .scene-card:hover .scene-title { color:#0f766e; }
+  .scene-card .scene-icon { transition:stroke .2s; }
+  .scene-card:hover .scene-icon { stroke:#14b8a6; }
 </style>
 </head>
 <body class="bg-background text-foreground text-sm antialiased">
@@ -293,7 +312,7 @@
               <button onclick="useExample(1)" class="text-xs px-2.5 py-1 border border-border rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition">转化漏斗对比</button>
               <button onclick="useExample(2)" class="text-xs px-2.5 py-1 border border-border rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition">月度花费追踪</button>
             </div>
-            <button onclick="generateFromNL()" class="inline-flex items-center gap-1.5 px-4 h-9 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 transition">
+            <button id="btnGenerateNL" onclick="generateFromNL()" class="inline-flex items-center gap-1.5 px-4 h-9 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 transition">
               生成报表
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </button>
@@ -570,7 +589,7 @@
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                 修改配置
               </button>
-              <button onclick="generateTemplateReport()" class="inline-flex items-center gap-1.5 px-4 h-10 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition">
+              <button id="btnGenerateReport" onclick="generateTemplateReport()" class="inline-flex items-center gap-1.5 px-4 h-10 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>
                 生成报表
               </button>
@@ -728,7 +747,7 @@
         </div>
         <div class="flex gap-2">
           <button onclick="stayOnWizard()" class="flex-1 px-4 h-10 border border-border rounded-md text-sm hover:bg-accent transition">留在这里</button>
-          <button onclick="viewGeneratedReport()" class="flex-1 px-4 h-10 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 font-medium transition">查看最近报表</button>
+          <button onclick="viewGeneratedReport()" class="flex-1 px-4 h-10 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 font-medium transition">查看报表</button>
         </div>
       </div>
     </div>
@@ -2957,6 +2976,287 @@ function renderSourcesGrid() {
 /* ============ 初始化 ============ */
 navTo('auto-report');
 renderSourcesGrid();
+</script>
+
+<!-- 悬浮引导按钮 -->
+<button id="guideFab" onclick="openWelcomeModal()">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+  用户引导
+</button>
+
+<!-- 欢迎弹窗 -->
+<div id="welcomeModal">
+  <div class="wm-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <span style="background:#f0fdf4;color:#166534;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid #bbf7d0;">新用户 · 快速上手</span>
+      <button onclick="skipTour()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:13px;">已经熟悉，跳过引导</button>
+    </div>
+    <h2 style="font-size:24px;font-weight:700;text-align:center;margin-bottom:8px;">选个场景试试，30 秒出结果</h2>
+    <p style="text-align:center;color:#6b7280;font-size:13px;margin-bottom:24px;">4 大场景任选其一，免费体验</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <!-- 场景 1 -->
+      <div class="scene-card">
+        <div style="position:absolute;top:-1px;right:12px;background:#2dd4bf;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:0 0 6px 6px;">HOT</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <span class="scene-badge">场景 1</span>
+          <svg class="scene-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <h3 class="scene-title" style="font-size:15px;font-weight:700;margin-bottom:5px;">选模板生成报表</h3>
+        <p style="font-size:12px;color:#6b7280;margin-bottom:10px;line-height:1.4;">选一个场景模板，看 AI 怎么自动配置维度、指标并生成报表</p>
+        <div style="background:white;border:1px solid #99f6e4;border-radius:7px;padding:7px 11px;font-size:11px;color:#0f766e;margin-bottom:10px;">广告效果分析 · Meta Ads</div>
+        <button onclick="startScenario1()" style="width:100%;height:38px;background:linear-gradient(135deg,#2dd4bf,#14b8a6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          快速生成报表
+        </button>
+      </div>
+      <!-- 场景 2 -->
+      <div class="scene-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <span class="scene-badge">场景 2</span>
+          <svg class="scene-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3 class="scene-title" style="font-size:15px;font-weight:700;margin-bottom:5px;">自然语言描述需求</h3>
+        <p style="font-size:12px;color:#6b7280;margin-bottom:10px;line-height:1.4;">一句话描述你的分析需求，AI 自动匹配最合适的模板和配置</p>
+        <div style="background:white;border:1px solid hsl(214.3 31.8% 91.4%);border-radius:7px;padding:7px 11px;font-size:11px;color:#374151;margin-bottom:10px;">Meta 和 TikTok 过去 30 天转化对比</div>
+        <button onclick="startScenario2()" style="width:100%;height:38px;background:linear-gradient(135deg,#2dd4bf,#14b8a6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          快速生成报表
+        </button>
+      </div>
+      <!-- 场景 3 -->
+      <div class="scene-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <span class="scene-badge">场景 3</span>
+          <svg class="scene-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg>
+        </div>
+        <h3 class="scene-title" style="font-size:15px;font-weight:700;margin-bottom:5px;">Agent 生成报表</h3>
+        <p style="font-size:12px;color:#6b7280;margin-bottom:10px;line-height:1.4;">通过 AI Agent 对话，自然语言一键生成广告数据报表</p>
+        <div style="background:white;border:1px solid hsl(214.3 31.8% 91.4%);border-radius:7px;padding:7px 11px;font-size:11px;color:#374151;margin-bottom:10px;">帮我生成过去 30 天 Meta 广告效果报表</div>
+        <button onclick="startScenario3()" style="width:100%;height:38px;background:linear-gradient(135deg,#2dd4bf,#14b8a6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          快速生成报表
+        </button>
+      </div>
+      <!-- 场景 4 -->
+      <div class="scene-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <span class="scene-badge">场景 4</span>
+          <svg class="scene-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        </div>
+        <h3 class="scene-title" style="font-size:15px;font-weight:700;margin-bottom:5px;">Agent 分析数据</h3>
+        <p style="font-size:12px;color:#6b7280;margin-bottom:10px;line-height:1.4;">通过 AI Agent 对话，深度分析广告投放数据与优化建议</p>
+        <div style="background:white;border:1px solid hsl(214.3 31.8% 91.4%);border-radius:7px;padding:7px 11px;font-size:11px;color:#374151;margin-bottom:10px;">分析过去 7 天哪些广告系列 ROAS 最高</div>
+        <button onclick="startScenario4()" style="width:100%;height:38px;background:linear-gradient(135deg,#2dd4bf,#14b8a6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          快速生成报表
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tour Overlay & Tooltip -->
+<div id="tourOverlay"></div>
+<div id="tourHighlight" class="tour-highlight" style="display:none;"></div>
+<div id="tourTooltip">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <span id="tourBadge" style="background:linear-gradient(135deg,#2dd4bf,#14b8a6);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;"></span>
+    <button onclick="switchTourScenario()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:12px;text-decoration:underline;">换个场景</button>
+  </div>
+  <p id="tourDesc" style="font-size:13px;line-height:1.6;color:#374151;margin-bottom:18px;"></p>
+  <div style="display:flex;align-items:center;justify-content:space-between;">
+    <button onclick="skipTour()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:13px;">跳过引导</button>
+    <div style="display:flex;gap:8px;">
+      <button id="tourPrevBtn" onclick="prevTourStep()" style="height:34px;padding:0 14px;border:1.5px solid hsl(214.3 31.8% 91.4%);border-radius:7px;background:white;cursor:pointer;font-size:13px;font-weight:500;display:none;">上一步</button>
+      <button id="tourNextBtn" onclick="nextTourStep()" style="height:34px;padding:0 18px;border:none;border-radius:7px;background:linear-gradient(135deg,#2dd4bf,#14b8a6);color:white;cursor:pointer;font-size:13px;font-weight:600;">下一步</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== 用户引导逻辑 ===== */
+let tourScenario='template',tourStep=0;
+const TOUR_STEPS_TEMPLATE=[
+  {badge:'选模板生成报表 · 1/3',desc:'当前位于 Auto Report 首页。这里展示了多种报表场景模板——系统已为你预选「广告效果分析」模板（Meta Ads），点击它即可自动预填配置。',targetSelector:'.template-card[data-platforms="facebook"]',position:'center'},
+  {badge:'选模板生成报表 · 2/3',desc:'已自动进入配置工作台。你可以在这里调整平台、账户、维度和指标。配置确认后，点击右上角的「生成报表」按钮，自动完成数据拉取和报表生成。',targetSelector:'#btnGenerateReport',position:'bottom'},
+  {badge:'选模板生成报表 · 3/3',desc:'报表已创建！点击「查看报表」可以查看刚生成的报表结果。',targetSelector:'button[onclick="viewGeneratedReport()"]',position:'top'}
+];
+const TOUR_STEPS_NL=[
+  {badge:'自然语言描述 · 1/3',desc:'在输入框里描述你的分析需求，例如「Meta Ads 和 TikTok 过去 30 天的转化和 ROAS 对比」，系统已为你预填了一条示例需求。',targetSelector:'#nlInput',position:'bottom'},
+  {badge:'自然语言描述 · 2/3',desc:'点击右侧「生成报表」按钮，系统会自动解析你的需求并生成报表配置。',targetSelector:'#btnGenerateNL',position:'bottom'},
+  {badge:'自然语言描述 · 3/3',desc:'已自动进入配置工作台。你可以在这里调整平台、账户、维度和指标。配置确认后，点击右上角的「生成报表」按钮，自动完成数据拉取和报表生成。',targetSelector:'#btnGenerateReport',position:'bottom'}
+];
+const TOUR_STEPS_AGENT_REPORT=[
+  {badge:'Agent 生成报表 · 1/2',desc:'切换到 Agent 页面，在对话框里输入你的报表需求，Agent 会自动理解并帮你生成报表。系统已为你预填了一条示例问题。',targetSelector:'#agentChatInput',position:'top'},
+  {badge:'Agent 生成报表 · 2/2',desc:'点击发送按钮，Agent 会自动分析需求、调用数据接口，并直接生成可查看的广告效果报表。',targetSelector:'#agentSendBtn',position:'top'}
+];
+const TOUR_STEPS_AGENT_ANALYSIS=[
+  {badge:'Agent 分析数据 · 1/2',desc:'在 Agent 对话框中输入你想深度分析的问题，Agent 会结合你的广告数据给出洞察和优化建议。系统已为你预填了一条示例分析问题。',targetSelector:'#agentChatInput',position:'top'},
+  {badge:'Agent 分析数据 · 2/2',desc:'点击发送，Agent 会自动拉取相关数据、识别规律，并给出具体的优化方向和建议。',targetSelector:'#agentSendBtn',position:'top'}
+];
+function getTourSteps(){
+  if(tourScenario==='nl') return TOUR_STEPS_NL;
+  if(tourScenario==='agent-report') return TOUR_STEPS_AGENT_REPORT;
+  if(tourScenario==='agent-analysis') return TOUR_STEPS_AGENT_ANALYSIS;
+  return TOUR_STEPS_TEMPLATE;
+}
+
+function openWelcomeModal(){document.getElementById('welcomeModal').classList.add('active')}
+function closeWelcomeModal(){document.getElementById('welcomeModal').classList.remove('active')}
+function skipTour(){closeWelcomeModal();endTour()}
+function switchTourScenario(){endTour();openWelcomeModal()}
+
+function startScenario1(){
+  tourScenario='template';tourStep=0;
+  closeWelcomeModal();
+  navTo('auto-report');
+  setTimeout(beginTour,200);
+}
+function startScenario2(){
+  tourScenario='nl';tourStep=0;
+  closeWelcomeModal();
+  navTo('auto-report');
+  // 自动填充示例文本
+  const nlInput=document.getElementById('nlInput');
+  if(nlInput){
+    nlInput.value='帮我生成 Meta Ads 和 TikTok 过去 30 天的转化和 ROAS 对比报表，按国家维度切片';
+  }
+  setTimeout(beginTour,200);
+}
+
+function startScenario3(){
+  tourScenario='agent-report';tourStep=0;
+  closeWelcomeModal();
+  // 通知父窗口切换到 Agent 页面，由 agent.html 接管引导
+  try{ window.parent.postMessage({type:'creatiads-switch-nav',target:'agent',scenario:'agent-report',agentPrompt:'帮我生成过去 30 天 Meta 广告效果报表'},'*'); }catch(e){}
+}
+
+function startScenario4(){
+  tourScenario='agent-analysis';tourStep=0;
+  closeWelcomeModal();
+  // 通知父窗口切换到 Agent 页面，由 agent.html 接管引导
+  try{ window.parent.postMessage({type:'creatiads-switch-nav',target:'agent',scenario:'agent-analysis',agentPrompt:'分析过去 7 天哪些广告系列 ROAS 最高，给出优化建议'},'*'); }catch(e){}
+}
+
+function beginTour(){
+  document.getElementById('tourOverlay').classList.add('active');
+  renderTourStep();
+}
+function endTour(){
+  document.getElementById('tourOverlay').classList.remove('active');
+  const tooltip=document.getElementById('tourTooltip');
+  tooltip.classList.remove('active');
+  tooltip.style.display='none';
+  document.getElementById('tourHighlight').style.display='none';
+  // 关闭成功弹窗（如果还开着）
+  document.getElementById('successModal')?.classList.add('hidden');
+}
+
+function renderTourStep(){
+  const steps=getTourSteps();
+  if(tourStep>=steps.length){endTour();return;}
+  const s=steps[tourStep];
+  document.getElementById('tourBadge').textContent=s.badge;
+  document.getElementById('tourDesc').textContent=s.desc;
+  const prev=document.getElementById('tourPrevBtn');
+  const next=document.getElementById('tourNextBtn');
+  prev.style.display=tourStep>0?'inline-flex':'none';
+  next.textContent=tourStep===steps.length-1?'完成':'下一步';
+  // 等目标元素可见后再定位，最多等 1500ms
+  if(s.targetSelector){
+    waitForElement(s.targetSelector, ()=>positionTourElements(s));
+  } else {
+    positionTourElements(s);
+  }
+}
+
+// 轮询等待元素出现并可见，出现后立即执行回调
+function waitForElement(selector, callback, maxWait=1500){
+  const start=Date.now();
+  function check(){
+    const el=document.querySelector(selector);
+    if(el && el.offsetParent!==null && el.getBoundingClientRect().width>0){
+      callback();
+      return;
+    }
+    if(Date.now()-start < maxWait){
+      requestAnimationFrame(check);
+    } else {
+      // 超时也执行，让tooltip居中显示
+      callback();
+    }
+  }
+  requestAnimationFrame(check);
+}
+
+function positionTourElements(s){
+  const tooltip=document.getElementById('tourTooltip');
+  const highlight=document.getElementById('tourHighlight');
+  const targetEl=s.targetSelector?document.querySelector(s.targetSelector):null;
+  if(targetEl&&targetEl.offsetParent!==null){
+    const r=targetEl.getBoundingClientRect(),p=6;
+    highlight.style.cssText=`display:block;left:${r.left-p}px;top:${r.top-p}px;width:${r.width+p*2}px;height:${r.height+p*2}px;`;
+    const ttW=360,ttH=190;
+    let l,t;
+    if(s.position==='left'){l=Math.max(12,r.left-ttW-14);t=r.top+r.height/2-ttH/2;}
+    else if(s.position==='bottom'){l=Math.min(r.left,window.innerWidth-ttW-12);t=r.bottom+12;}
+    else if(s.position==='top'){l=Math.max(12,Math.min(r.left+r.width/2-ttW/2,window.innerWidth-ttW-12));t=r.top-ttH-12;}
+    else{l=Math.max(12,Math.min(r.left+r.width/2-ttW/2,window.innerWidth-ttW-12));t=r.bottom+12;}
+    if(t+ttH>window.innerHeight-12)t=r.top-ttH-12;
+    tooltip.style.cssText=`display:block;left:${l}px;top:${Math.max(12,t)}px;right:auto;bottom:auto;max-width:${ttW}px;`;
+  }else{
+    highlight.style.display='none';
+    tooltip.style.cssText='display:block;left:50%;top:50%;transform:translate(-50%,-50%);right:auto;bottom:auto;max-width:360px;';
+  }
+  tooltip.classList.add('active');
+}
+
+function nextTourStep(){
+  const steps=getTourSteps();
+  if(tourStep>=steps.length-1){
+    endTour();
+    return;
+  }
+  // 场景1：步骤0→1 打开模板配置
+  if(tourScenario==='template'&&tourStep===0){
+    tourStep++;
+    openTemplatePreview('performance',['facebook']);
+    setTimeout(renderTourStep,200);return;
+  }
+  // 场景1：步骤1→2 触发生成报表弹窗
+  if(tourScenario==='template'&&tourStep===1){
+    tourStep++;
+    generateTemplateReport();
+    setTimeout(renderTourStep,300);return;
+  }
+  // 场景2：步骤1→2 触发 NL 生成，打开配置工作台
+  if(tourScenario==='nl'&&tourStep===1){
+    tourStep++;
+    generateFromNL();
+    setTimeout(renderTourStep,200);return;
+  }
+  tourStep++;renderTourStep();
+}
+
+function prevTourStep(){
+  if(tourStep<=0)return;
+  tourStep--;
+  if(tourScenario==='template'&&tourStep===0){
+    // 关闭抽屉，回首页
+    document.getElementById('drawerOverlay')?.click();
+    navTo('auto-report');
+    setTimeout(renderTourStep,200);return;
+  }
+  renderTourStep();
+}
+
+// 页面加载后自动弹出（非 iframe 时）
+setTimeout(()=>{
+  try{if(window.self!==window.top)return;}catch(e){return;}
+  openWelcomeModal();
+},600);
+
+// 监听父窗口发来的消息
+window.addEventListener('message',(e)=>{
+  if(!e.data)return;
+  if(e.data.type==='creatiads-open-welcome') openWelcomeModal();
+});
 </script>
 </body>
 </html>

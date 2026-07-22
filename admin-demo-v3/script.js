@@ -65,7 +65,7 @@ function getOrgWorkspaces(orgId) {
 function getWorkspaceMembers(wsId) {
     return USER_WORKSPACE_ROLES
         .filter(r => r.workspaceId === wsId)
-        .map(r => ({ ...getUser(r.userId), wsRole: r.wsRole, wsEditPerm: r.wsEditPerm || 'edit' }));
+        .map(r => ({ ...getUser(r.userId), wsRole: r.wsRole }));
 }
 
 /* ============================================ */
@@ -900,6 +900,7 @@ function renderWsDetailMembers(wsId) {
     
     tbody.innerHTML = members.map(m => {
         const orgRole = getUserOrgRole(m.id, CURRENT_CONTEXT.orgId);
+        // 非管理员/Owner 且开启允许成员邀请时，固定显示 Viewer，不可编辑
         const canEditRole = canManage;
         const canRemove = canManage && m.id !== CURRENT_USER_ID;
         return `
@@ -907,81 +908,21 @@ function renderWsDetailMembers(wsId) {
                 <td>${m.name}</td>
                 <td>${m.email}</td>
                 <td><span class="role-badge ${orgRole?.toLowerCase()}">${orgRole || '-'}</span></td>
-                <td>${renderWsRoleCell(m, orgRole, canEditRole)}</td>
-                <td>${renderWsPermCell(m, orgRole, canEditRole)}</td>
+                <td>
+                    ${canEditRole ? `
+                        <select onchange="changeWsMemberRole(${m.id}, this.value)">
+                            <option value="Owner" ${m.wsRole === 'Owner' ? 'selected' : ''}>Owner</option>
+                            <option value="Editor" ${m.wsRole === 'Editor' ? 'selected' : ''}>Editor</option>
+                            <option value="Viewer" ${m.wsRole === 'Viewer' ? 'selected' : ''}>Viewer</option>
+                        </select>
+                    ` : `<span class="role-badge viewer">Viewer</span>`}
+                </td>
                 <td>
                     ${canRemove ? `<button class="btn-link btn-link-danger" onclick="removeWsMember(${m.id})">移除</button>` : ''}
                 </td>
             </tr>
         `;
     }).join('');
-}
-
-/**
- * 空间角色列 —— Owner / Editor / Viewer 三选一
- * 规则：企业 Admin 强制 Owner，不可改
- */
-function renderWsRoleCell(m, orgRole, canEditRole) {
-    const isOrgAdmin = orgRole === 'Admin';
-
-    // 企业 Admin：永远 Owner，锁定
-    if (isOrgAdmin) {
-        return '<span class="role-badge owner">Owner</span>';
-    }
-
-    if (!canEditRole) {
-        return '<span class="role-badge ' + (m.wsRole || '').toLowerCase() + '">' + (m.wsRole || '-') + '</span>';
-    }
-
-    return '<select class="ws-role-select" onchange="setWsRolePreset(' + m.id + ', this.value)">' +
-        '<option value="Owner" '  + (m.wsRole === 'Owner'  ? 'selected' : '') + '>Owner</option>' +
-        '<option value="Editor" ' + (m.wsRole === 'Editor' ? 'selected' : '') + '>Editor</option>' +
-        '<option value="Viewer" ' + (m.wsRole === 'Viewer' ? 'selected' : '') + '>Viewer</option>' +
-    '</select>';
-}
-
-/**
- * 权限列
- *   Owner  → "全部权限"（锁死）
- *   Editor → "可编辑 / 可查看" 下拉，控制该 Editor 对空间内资源的默认操作能力
- *   Viewer → "仅分享的资源"（不可选；分享时逐个决定编辑/查看）
- */
-function renderWsPermCell(m, orgRole, canEditRole) {
-    const isOrgAdmin = orgRole === 'Admin';
-    const wsRole = m.wsRole;
-
-    if (wsRole === 'Owner') {
-        return '<span class="ws-perm-locked" title="' + (isOrgAdmin ? '企业 Admin 强制拥有全部权限' : 'Owner 拥有全部权限') + '">全部权限</span>';
-    }
-
-    if (wsRole === 'Viewer') {
-        return '<span class="ws-perm-readonly ws-perm-viewer-hint" title="Viewer 默认无空间级权限，仅能查看被逐个分享的资源">仅分享的资源</span>';
-    }
-
-    // Editor
-    if (!canEditRole) {
-        return '<span class="ws-perm-readonly">' + (m.wsEditPerm === 'view' ? '可查看' : '可编辑') + '</span>';
-    }
-
-    const perm = m.wsEditPerm || 'edit';
-    return '<select class="ws-perm-select" onchange="setEditorPerm(' + m.id + ', this.value)">' +
-        '<option value="edit" ' + (perm === 'edit' ? 'selected' : '') + '>可编辑</option>' +
-        '<option value="view" ' + (perm === 'view' ? 'selected' : '') + '>可查看</option>' +
-    '</select>';
-}
-
-/** 修改 Editor 的编辑权限档位（edit / view）*/
-function setEditorPerm(userId, perm) {
-    const rel = USER_WORKSPACE_ROLES.find(r => r.userId === userId && r.workspaceId === viewingWorkspaceId);
-    if (rel) rel.wsEditPerm = perm;
-    renderWsDetailMembers(viewingWorkspaceId);
-}
-
-/** 统一入口：设置某成员在当前空间的角色（Owner / Editor / Viewer）*/
-function setWsRolePreset(userId, newRole) {
-    const rel = USER_WORKSPACE_ROLES.find(r => r.userId === userId && r.workspaceId === viewingWorkspaceId);
-    if (rel) rel.wsRole = newRole;
-    renderWsDetailMembers(viewingWorkspaceId);
 }
 
 function changeWsMemberRole(userId, newRole) {
@@ -1165,11 +1106,53 @@ function deleteWorkspaceFromDetail() {
 /* ============================================ */
 /* ===== 订阅与计费 ===== */
 /* ============================================ */
+/* 计费周期状态：'monthly' | 'yearly' */
+let selectedBillingCycle = 'monthly';
+
+function setBillingCycle(cycle) {
+    selectedBillingCycle = cycle;
+    renderPlanComparison();
+    // 更新 tab active 样式
+    document.querySelectorAll('.billing-cycle-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.cycle === cycle);
+    });
+}
+
 function renderBillingPage() {
     renderBillingPlanCard();
     renderBillingUsage();
     renderPlanComparison();
+    renderAddons();
     renderBillingHistory();
+}
+
+function renderAddons() {
+    const container = document.getElementById('addonGrid');
+    if (!container) return;
+
+    const org = getCurrentOrg();
+    const sub = org ? ORG_SUBSCRIPTIONS.find(s => s.orgId === org.id) : null;
+    const currentPlanKey = sub?.plan || 'FREE';
+
+    container.innerHTML = Object.values(ADDONS).map(addon => {
+        const isAvailable = addon.availableFor.includes(currentPlanKey);
+        return `
+            <div class="addon-card ${isAvailable ? '' : 'addon-locked'}">
+                <div class="addon-icon">${addon.icon}</div>
+                <div class="addon-body">
+                    <div class="addon-name">${addon.name}</div>
+                    <div class="addon-desc">${addon.desc}</div>
+                    <div class="addon-price">${addon.priceUnit}</div>
+                </div>
+                <div class="addon-action">
+                    ${isAvailable
+                        ? '<button class="btn btn-secondary btn-sm" onclick="alert(\'加购 ' + addon.name + ' - Demo\')">加购</button>'
+                        : '<span class="addon-locked-tag">需升级到 ' + addon.availableFor[0] + '</span>'
+                    }
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 function renderBillingPlanCard() {
@@ -1180,15 +1163,29 @@ function renderBillingPlanCard() {
     if (!sub) return;
     
     const plan = getPlan(sub.plan);
-    const planColors = { FREE: '#6b7280', STARTER: '#2dd4bf', PRO: '#22d3ee', ENTERPRISE: '#2dd4bf' };
+    const planColors = {
+        FREE:       '#6b7280',
+        PRO:        '#2dd4bf',
+        TEAM:       '#8b5cf6',
+        ENTERPRISE: '#0f766e'
+    };
     const bgColor = planColors[plan.key] || '#2dd4bf';
-    
+
+    // 根据当前订阅的 billingCycle 显示价格
+    const cycle = sub.billingCycle || 'monthly';
+    const currentPrice = cycle === 'yearly' ? plan.priceYearly : plan.price;
+    const priceLabel = plan.price === 0
+        ? 'Free forever'
+        : (plan.price === -1
+            ? plan.priceUnit
+            : `$${currentPrice} / month${cycle === 'yearly' ? '（年付）' : ''}`);
+
     document.getElementById('billingPlanCard').innerHTML = `
         <div class="billing-plan-header" style="background: linear-gradient(135deg, ${bgColor}, ${bgColor}dd);">
             <div>
-                <div class="billing-plan-label">当前套餐</div>
+                <div class="billing-plan-label">当前套餐 · ${plan.aiLevel || ''}</div>
                 <div class="billing-plan-name">${plan.name}</div>
-                <div class="billing-plan-meta">下次续费: ${sub.expireDate || '永久'} · ${plan.price === 0 ? '免费' : '¥' + plan.price.toLocaleString() + '/月'}</div>
+                <div class="billing-plan-meta">下次续费: ${sub.expireDate || '永久'} · ${priceLabel}</div>
             </div>
             <button class="btn btn-outline-light" onclick="openUpgradeModal('${plan.key}')">升级套餐</button>
         </div>
@@ -1198,38 +1195,53 @@ function renderBillingPlanCard() {
 function renderBillingUsage() {
     const org = getCurrentOrg();
     if (!org) return;
-    
-    const usage = ORG_USAGE[org.id] || { seats: 0, seatsLimit: 10, aiTokens: 0, aiTokensLimit: 1000000, storage: 0, storageLimit: 10 };
+
+    const usage = ORG_USAGE[org.id] || { seats: 0, credits: 0, creditsLimit: 100, adSpend: 0, adSpendLimit: 5000, workspaces: 0, workspacesLimit: 1 };
     const sub = ORG_SUBSCRIPTIONS.find(s => s.orgId === org.id);
     const plan = sub ? getPlan(sub.plan) : null;
-    const monthlyPrice = plan && plan.price > 0 ? plan.price : 0;
-    
-    const aiTokensUsed = (usage.aiTokens / 1000000).toFixed(1);
-    const aiTokensLimit = (usage.aiTokensLimit / 1000000).toFixed(0);
-    const aiTokensPercent = (usage.aiTokens / usage.aiTokensLimit * 100).toFixed(0);
-    const seatsRemaining = usage.seatsLimit - usage.seats;
-    const storageRemaining = usage.storageLimit - usage.storage;
-    
+    const cycle = sub?.billingCycle || 'monthly';
+    const monthlyPrice = plan && plan.price > 0
+        ? (cycle === 'yearly' ? plan.priceYearly : plan.price)
+        : 0;
+
+    // 格式化函数
+    const fmt = (n) => n === -1 ? '∞' : n.toLocaleString();
+    const fmtMoney = (n) => n === -1 ? '∞' : '$' + n.toLocaleString();
+
+    // 积分用量
+    const creditsPercent = usage.creditsLimit === -1 ? 0 : (usage.credits / usage.creditsLimit * 100);
+    const creditsColor = creditsPercent > 80 && usage.creditsLimit !== -1 ? '#ef4444' : '#10b981';
+    const creditsHint = usage.creditsLimit === -1
+        ? '无限调用'
+        : (creditsPercent > 80 ? '即将用完，可购买积分包' : '使用正常');
+
+    // 广告花费用量
+    const adSpendPercent = usage.adSpendLimit === -1 ? 0 : (usage.adSpend / usage.adSpendLimit * 100);
+    const adSpendColor = adSpendPercent > 80 && usage.adSpendLimit !== -1 ? '#ef4444' : '#10b981';
+    const adSpendHint = usage.adSpendLimit === -1
+        ? '无限花费'
+        : (adSpendPercent > 80 ? '接近上限，考虑升级' : '使用正常');
+
     document.getElementById('billingUsageGrid').innerHTML = `
         <div class="usage-card">
-            <div class="usage-card-label">已用席位</div>
-            <div class="usage-card-value">${usage.seats} / ${usage.seatsLimit}</div>
-            <div class="usage-card-hint" style="color:#10b981;">还可邀请 ${seatsRemaining} 人</div>
+            <div class="usage-card-label">本月 Agent 积分</div>
+            <div class="usage-card-value">${fmt(usage.credits)} / ${fmt(usage.creditsLimit)}</div>
+            <div class="usage-card-hint" style="color:${creditsColor};">${creditsHint}</div>
         </div>
         <div class="usage-card">
-            <div class="usage-card-label">本月 AI Token</div>
-            <div class="usage-card-value">${aiTokensUsed}M / ${aiTokensLimit}M</div>
-            <div class="usage-card-hint" style="color:${aiTokensPercent > 80 ? '#ef4444' : '#10b981'};">${aiTokensPercent > 80 ? '即将用完' : '使用正常'}</div>
+            <div class="usage-card-label">本月广告花费</div>
+            <div class="usage-card-value">${fmtMoney(usage.adSpend)} / ${fmtMoney(usage.adSpendLimit)}</div>
+            <div class="usage-card-hint" style="color:${adSpendColor};">${adSpendHint}</div>
         </div>
         <div class="usage-card">
-            <div class="usage-card-label">数据存储</div>
-            <div class="usage-card-value">${usage.storage} GB / ${usage.storageLimit} GB</div>
-            <div class="usage-card-hint" style="color:#10b981;">还可 ${storageRemaining} GB</div>
+            <div class="usage-card-label">工作空间</div>
+            <div class="usage-card-value">${fmt(usage.workspaces)} / ${fmt(usage.workspacesLimit)}</div>
+            <div class="usage-card-hint" style="color:#10b981;">席位不限</div>
         </div>
         <div class="usage-card">
             <div class="usage-card-label">本月账单</div>
-            <div class="usage-card-value">¥${monthlyPrice.toLocaleString()}</div>
-            <div class="usage-card-hint" style="color:#9ca3af;">含 0 元加购项</div>
+            <div class="usage-card-value">${monthlyPrice > 0 ? '$' + monthlyPrice.toLocaleString() : 'Free'}</div>
+            <div class="usage-card-hint" style="color:#9ca3af;">${cycle === 'yearly' ? '年付月均 · 不含 Add-on' : '月付 · 不含 Add-on'}</div>
         </div>
     `;
 }
@@ -1241,27 +1253,52 @@ function renderPlanComparison() {
     const sub = ORG_SUBSCRIPTIONS.find(s => s.orgId === org.id);
     const currentPlanKey = sub?.plan || 'FREE';
     
-    const planKeys = ['FREE', 'STARTER', 'PRO', 'ENTERPRISE'];
+    const planKeys = ['FREE', 'PRO', 'TEAM', 'ENTERPRISE'];
     const container = document.getElementById('planComparison');
-    
+    const isYearly = selectedBillingCycle === 'yearly';
+
     container.innerHTML = planKeys.map(key => {
         const plan = SUBSCRIPTION_PLANS[key];
         const isCurrent = key === currentPlanKey;
-        const priceDisplay = plan.price === -1 ? plan.priceUnit : (plan.price === 0 ? '免费' : '¥' + plan.price);
-        const originalPriceDisplay = plan.originalPrice ? '<span class="plan-original-price">原价¥' + plan.originalPrice + '/月</span>' : '';
-        
+        const isRecommended = plan.recommended === true;
+
+        // 按当前选择的周期取价格
+        const displayPrice = isYearly ? plan.priceYearly : plan.price;
+        const priceDisplay = displayPrice === -1
+            ? plan.priceUnit
+            : (displayPrice === 0 ? 'Free' : '$' + displayPrice);
+        const priceUnitDisplay = displayPrice > 0 ? ' / mo' : '';
+
+        // 年付时显示节省金额，月付时显示原价
+        let priceExtraDisplay = '';
+        if (displayPrice > 0) {
+            if (isYearly && plan.price > plan.priceYearly) {
+                const yearSave = (plan.price - plan.priceYearly) * 12;
+                priceExtraDisplay = '<span class="plan-original-price">年付省 $' + yearSave + '</span>';
+            } else if (!isYearly && plan.originalPrice) {
+                priceExtraDisplay = '<span class="plan-original-price">原价 $' + plan.originalPrice + '/mo</span>';
+            }
+        }
+
+        // 年付时价格下方展示"年付一次性 $X"
+        let yearlyTotalDisplay = '';
+        if (isYearly && displayPrice > 0) {
+            yearlyTotalDisplay = `<div class="plan-yearly-total">按年付 $${displayPrice * 12}/年</div>`;
+        }
+
         return `
-            <div class="plan-card ${isCurrent ? 'current' : ''}">
+            <div class="plan-card ${isCurrent ? 'current' : ''} ${isRecommended ? 'recommended' : ''}">
                 <div class="plan-card-header">
                     <div class="plan-card-name">${plan.name}</div>
-                    <div class="plan-card-price">${priceDisplay}<span class="plan-price-unit">${plan.price > 0 ? ' / 月' : ''}</span>${originalPriceDisplay}</div>
+                    <div class="plan-card-price">${priceDisplay}<span class="plan-price-unit">${priceUnitDisplay}</span>${priceExtraDisplay}</div>
+                    ${yearlyTotalDisplay}
                     <div class="plan-card-desc">${plan.priceDesc}</div>
                 </div>
                 <ul class="plan-card-highlights">
                     ${plan.highlights.map(h => '<li class="plan-highlight">' + h + '</li>').join('')}
                 </ul>
                 <div class="plan-card-action">
-                    ${isCurrent ? '<span class="plan-current-tag">当前套餐</span>' : '<button class="btn btn-primary btn-sm" onclick="openUpgradeModal(\'' + key + '\')">' + (key === 'ENTERPRISE' ? '联系我们' : '升级') + '</button>'}
+                    ${isCurrent ? '<span class="plan-current-tag">当前套餐</span>' : '<button class="btn btn-primary btn-sm" onclick="openUpgradeModal(\'' + key + '\')">' + (key === 'ENTERPRISE' ? '联系我们' : (displayPrice === 0 ? '开始使用' : '升级')) + '</button>'}
                 </div>
             </div>
         `;
@@ -1288,7 +1325,8 @@ function renderBillingHistory() {
         const statusText = r.status === 'paid' ? '已支付' : r.status;
         return '<tr>' +
             '<td>' + r.paidAt.substring(0, 7) + '</td>' +
-            '<td>¥' + r.amount.toLocaleString() + '</td>' +
+            '<td>' + (r.type || '-') + '</td>' +
+            '<td>$' + r.amount.toLocaleString() + '</td>' +
             '<td>' + r.method + '</td>' +
             '<td><span class="billing-status ' + statusClass + '">' + statusText + '</span></td>' +
             '<td><button class="btn-link" onclick="alert(\'下载发票 - Demo\')">下载发票</button></td>' +
@@ -1304,12 +1342,14 @@ function openUpgradeModal(planKey) {
     
     document.getElementById('upgradeModalTitle').textContent = `升级到 ${targetPlan.name}`;
     
-    const priceText = targetPlan.price === -1 ? '联系我们' : (targetPlan.price === 0 ? '免费' : `¥${targetPlan.price}/月`);
-    
+    const priceText = targetPlan.price === -1
+        ? '联系销售报价'
+        : (targetPlan.price === 0 ? 'Free forever' : `$${targetPlan.price} / month`);
+
     document.getElementById('upgradeModalBody').innerHTML = `
         <div class="form-group">
             <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:6px;padding:16px;">
-                <div style="font-size:14px;color:#115e59;margin-bottom:8px;">目标套餐</div>
+                <div style="font-size:14px;color:#115e59;margin-bottom:8px;">目标套餐 · ${targetPlan.aiLevel || ''}</div>
                 <div style="font-size:24px;font-weight:700;color:#0d9488;">${targetPlan.name}</div>
                 <div style="font-size:18px;color:#0d9488;margin-top:4px;">${priceText}</div>
             </div>
@@ -1324,9 +1364,9 @@ function openUpgradeModal(planKey) {
             <div class="form-group">
                 <label>支付方式</label>
                 <select class="form-input">
-                    <option>微信支付</option>
-                    <option>支付宝</option>
-                    <option>银行转账</option>
+                    <option>Stripe (Credit Card)</option>
+                    <option>PayPal</option>
+                    <option>Wire Transfer</option>
                 </select>
             </div>
         ` : ''}
@@ -1366,7 +1406,7 @@ function confirmUpgrade() {
             type: '订阅',
             amount: plan.price,
             paidAt: new Date().toISOString().split('T')[0],
-            method: '微信支付',
+            method: 'Stripe (Credit Card)',
             invoice: `INV-${Date.now()}`,
             status: 'paid'
         });

@@ -139,6 +139,12 @@
                     </table>
                 </div>
 
+                <div class="info-banner">
+                    <strong>💡 权限说明：</strong>
+                    企业 <span class="role-badge admin">Admin</span> 可管理组织、邀请成员、强制加入任意空间；
+                    <span class="role-badge member">Member</span> 只能访问被邀请的空间
+                </div>
+
                 <!-- 批量操作工具栏（默认隐藏） -->
                 <div class="batch-toolbar" id="batchToolbar" style="display:none;">
                     <span class="batch-info">已选 <strong id="batchSelectedCount">0</strong> 名成员</span>
@@ -190,7 +196,7 @@
                 <div class="page-header">
                     <div>
                         <h1>订阅与计费</h1>
-                        <p class="page-desc">套餐、席位和账单管理</p>
+                        <p class="page-desc">5 档主套餐（AI 能力分层）+ Add-on 按需加购 · USD 计价</p>
                     </div>
                 </div>
 
@@ -209,8 +215,25 @@
 
                 <!-- 套餐对比 -->
                 <div class="billing-card">
-                    <h3 class="section-title">套餐对比</h3>
+                    <div class="section-title-row">
+                        <h3 class="section-title">套餐对比</h3>
+                        <div class="billing-cycle-toggle">
+                            <button class="billing-cycle-tab active" data-cycle="monthly" onclick="setBillingCycle('monthly')">月付</button>
+                            <button class="billing-cycle-tab" data-cycle="yearly" onclick="setBillingCycle('yearly')">
+                                年付 <span class="cycle-save-tag">省 20%</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="plan-comparison" id="planComparison">
+                        <!-- 动态渲染 -->
+                    </div>
+                </div>
+
+                <!-- Add-ons 加购项 -->
+                <div class="billing-card">
+                    <h3 class="section-title">Add-ons · 按需加购</h3>
+                    <p class="section-desc" style="color:#6b7280;font-size:13px;margin:-8px 0 16px;">主套餐门槛低 + 深度用户按需付费，客单价灵活拉升</p>
+                    <div class="addon-grid" id="addonGrid">
                         <!-- 动态渲染 -->
                     </div>
                 </div>
@@ -222,6 +245,7 @@
                         <thead>
                             <tr>
                                 <th>账期</th>
+                                <th>类型</th>
                                 <th>金额</th>
                                 <th>支付方式</th>
                                 <th>状态</th>
@@ -472,10 +496,9 @@
                             <tr>
                                 <th>姓名</th>
                                 <th>邮箱</th>
-                                <th style="width:90px;">企业角色</th>
-                                <th style="width:120px;">空间角色</th>
-                                <th style="width:130px;">权限</th>
-                                <th style="width:70px;">操作</th>
+                                <th style="width:100px;">企业角色</th>
+                                <th style="width:140px;">空间角色</th>
+                                <th style="width:80px;">操作</th>
                             </tr>
                         </thead>
                         <tbody id="wsMembersTableBody"></tbody>

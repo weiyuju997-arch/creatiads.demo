@@ -465,21 +465,29 @@ input, select, textarea { font-family: inherit; }
     font-weight: 500;
 }
 
-/* 有管理权限的角色 —— 主色 teal */
-.role-badge.admin,
-.role-badge.owner {
-    background: #f0fdfa;
-    color: #0f766e;
-    border: 1px solid #ccfbf1;
+.role-badge.admin {
+    background: #fef3c7;
+    color: #92400e;
 }
 
-/* 普通角色 —— 中性灰 */
-.role-badge.member,
-.role-badge.editor,
+.role-badge.member {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.role-badge.owner {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.role-badge.editor {
+    background: #d1fae5;
+    color: #065f46;
+}
+
 .role-badge.viewer {
-    background: #f4f4f5;
-    color: #52525b;
-    border: 1px solid #e4e4e7;
+    background: #f3f4f6;
+    color: #6b7280;
 }
 
 /* ===== Workspace Tags ===== */
@@ -511,9 +519,9 @@ input, select, textarea { font-family: inherit; }
     font-weight: 500;
 }
 
-.workspace-tag .ws-role-tag.owner  { background: #f0fdfa; color: #0f766e; }
-.workspace-tag .ws-role-tag.editor { background: #f4f4f5; color: #52525b; }
-.workspace-tag .ws-role-tag.viewer { background: #f4f4f5; color: #52525b; }
+.workspace-tag .ws-role-tag.owner { background: #fee2e2; color: #b91c1c; }
+.workspace-tag .ws-role-tag.editor { background: #d1fae5; color: #065f46; }
+.workspace-tag .ws-role-tag.viewer { background: #f3f4f6; color: #6b7280; }
 
 .workspace-tag.admin-virtual {
     color: #14b8a6;
@@ -1236,6 +1244,221 @@ textarea.form-input { resize: vertical; min-height: 60px; }
     border-radius: 4px;
     font-size: 12px;
     font-weight: 500;
+}
+
+/* ===== 月付/年付切换 ===== */
+.section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-title-row .section-title {
+    margin-bottom: 0;
+}
+
+.billing-cycle-toggle {
+    display: inline-flex;
+    padding: 4px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    gap: 2px;
+}
+
+.billing-cycle-tab {
+    padding: 6px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.billing-cycle-tab:hover {
+    color: #111827;
+}
+
+.billing-cycle-tab.active {
+    background: #fff;
+    color: #0d9488;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.cycle-save-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.plan-yearly-total {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* ===== 积分规则 ===== */
+.credit-rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 8px;
+}
+
+.credit-rule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.credit-rule-cost {
+    display: inline-block;
+    padding: 2px 8px;
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    color: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.credit-rule-action {
+    font-weight: 500;
+    color: #111827;
+    flex-shrink: 0;
+}
+
+.credit-rule-example {
+    color: #9ca3af;
+    font-size: 12px;
+    font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* AI 能力等级标签 */
+.plan-ai-level {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #f0fdfa, #ccfbf1);
+    color: #0d9488;
+    border: 1px solid #99f6e4;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Recommended 徽章优化 */
+.plan-card.recommended::before {
+    content: '★ 推荐';
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* ===== Add-on 卡片 ===== */
+.addon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.addon-card {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    transition: all 0.2s;
+    align-items: flex-start;
+}
+
+.addon-card:hover:not(.addon-locked) {
+    background: #fff;
+    border-color: #14b8a6;
+    box-shadow: 0 2px 8px rgba(20, 184, 166, 0.08);
+}
+
+.addon-card.addon-locked {
+    opacity: 0.55;
+}
+
+.addon-icon {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 20px;
+}
+
+.addon-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.addon-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.addon-desc {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.5;
+    margin-bottom: 6px;
+}
+
+.addon-price {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0d9488;
+}
+
+.addon-action {
+    flex: 0 0 auto;
+    align-self: center;
+}
+
+.addon-locked-tag {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #f3f4f6;
+    color: #9ca3af;
+    border-radius: 4px;
+    font-size: 11px;
 }
 
 /* ===== Billing Table ===== */
@@ -2099,50 +2322,4 @@ textarea.form-input { resize: vertical; min-height: 60px; }
     border-color: #5eead4;
     border-style: solid;
     color: #0f172a;
-}
-
-
-/* ===== 空间角色 / 权限 下拉与只读态 ===== */
-.ws-role-select,
-.ws-perm-select {
-    padding: 4px 8px;
-    border: 1px solid #cbd5e1;
-    border-radius: 5px;
-    background: #fff;
-    font-size: 12px;
-    color: #0f172a;
-    cursor: pointer;
-    min-width: 90px;
-}
-
-.ws-role-select:focus,
-.ws-perm-select:focus {
-    outline: none;
-    border-color: #14b8a6;
-    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
-}
-
-.ws-perm-locked {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 999px;
-    background: #f0fdfa;
-    color: #0f766e;
-    font-size: 12px;
-    font-weight: 600;
-    border: 1px solid #ccfbf1;
-}
-
-.ws-perm-readonly {
-    display: inline-block;
-    padding: 3px 8px;
-    color: #475569;
-    font-size: 12px;
-}
-
-
-.ws-perm-viewer-hint {
-    color: #94a3b8;
-    font-size: 12px;
-    font-style: italic;
 }

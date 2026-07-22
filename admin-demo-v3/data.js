@@ -15,102 +15,251 @@ let CURRENT_USER_ID = 1;
 /* ===== 演示用：当前上下文 ===== */
 let CURRENT_CONTEXT = { type: 'org', orgId: 1 };
 
-/* ===== 套餐定义 ===== */
+/* ===== 套餐定义（v3 · 精简版 · 4 档 · AI 能力分层） =====
+ * 设计原则：
+ *   - 4 档主套餐（Free / Pro / Team / Enterprise），USD 计价
+ *   - 分层核心：AI 能力（Chat → 分析 → 执行）+ 是否支持组织
+ *   - 无席位限制、无平台限制（对齐用户反馈）
+ *   - 按月广告花费分档限制（对标 Madgicx）
+ *   - 支持月付 / 年付（年付 -20%）
+ *   - Agent 使用按积分计量（不是 token）
+ *
+ * 积分消耗规则（credits）：
+ *   - Chat 简单问答       : 1 积分
+ *   - Deep 分析           : 3 积分
+ *   - Autopilot 自动触发  : 2 积分
+ *   - 执行操作            : 5 积分
+ *   - 复盘报告            : 10 积分
+ */
 const SUBSCRIPTION_PLANS = {
     FREE: {
         key: 'FREE',
-        name: '免费版',
+        name: 'Free',
         price: 0,
-        priceUnit: '永久免费',
-        priceDesc: '适合个人尝鲜',
-        limits: { maxOrgs: 0, maxWorkspaces: 1, maxMembers: 1, platforms: ['meta', 'google'] },
-        highlights: ['1 个个人工作空间', '仅自己使用', '接入 Meta + Google', 'Dashboard + BI 基础报表']
-    },
-    STARTER: {
-        key: 'STARTER',
-        name: '入门版',
-        price: 99,
-        originalPrice: 129,
-        priceUnit: '¥99 / 月',
-        priceDesc: '适合小团队启动',
-        limits: { maxOrgs: 1, maxWorkspaces: 3, maxMembers: 5, platforms: ['meta', 'google', 'tiktok'] },
-        highlights: ['可创建 1 个组织', '3 个工作空间', '最多邀请 5 名成员', '接入 Meta / Google / TikTok']
+        priceYearly: 0,
+        priceUnit: 'Free forever',
+        priceDesc: '个人尝鲜，无需信用卡',
+        aiLevel: 'AI Chat + 分析',
+        limits: {
+            hasOrg: false,
+            maxWorkspaces: 1,
+            maxMembers: -1,        // 席位不限
+            platforms: ['*'],      // 平台不限
+            monthlyAdSpend: 5000,  // 月广告花费上限 $5K
+            creditsMonthly: 200,
+            dataRetentionDays: 90
+        },
+        highlights: [
+            'AI 深度分析 + 优化建议（200 积分/月）',
+            '1 个人空间 · 无组织',
+            '支持 Meta、Google、TikTok 等平台媒体',
+            '接入广告账户 ≤ 2 个 · 每日同步'
+        ]
     },
     PRO: {
         key: 'PRO',
-        name: '专业版',
-        price: 299,
-        originalPrice: 399,
-        priceUnit: '¥299 / 月',
-        priceDesc: '适合成长型团队',
-        limits: { maxOrgs: 3, maxWorkspaces: 10, maxMembers: 20, platforms: ['meta', 'google', 'tiktok', 'snapchat'] },
-        highlights: ['最多 3 个组织', '10 个工作空间', '最多 20 名成员', '解锁 Snapchat 平台']
+        name: 'Pro',
+        price: 29,
+        priceYearly: 23,           // -20% 年付月均
+        originalPrice: 39,
+        priceUnit: '$29 / month',
+        priceUnitYearly: '$23 / month（年付）',
+        priceDesc: '个人优化师、Solo 创业者',
+        aiLevel: 'AI Chat + 分析',
+        limits: {
+            hasOrg: false,
+            maxWorkspaces: 3,
+            maxMembers: -1,
+            platforms: ['*'],
+            monthlyAdSpend: 50000, // 月广告花费上限 $50K
+            creditsMonthly: 2000,
+            dataRetentionDays: -1
+        },
+        highlights: [
+            'AI 深度分析 + 优化建议（2,000 积分/月）',
+            '3 个工作空间 · 无组织',
+            '支持 Meta、Google、TikTok 等平台媒体',
+            '接入广告账户 ≤ 10 个 · 每日同步',
+            'Agent 智能助手：报告订阅'
+        ]
+    },
+    TEAM: {
+        key: 'TEAM',
+        name: 'Team',
+        price: 149,
+        priceYearly: 119,
+        originalPrice: 199,
+        priceUnit: '$149 / month',
+        priceUnitYearly: '$119 / month（年付）',
+        priceDesc: '成长团队、跨境 DTC、中小 Agency',
+        aiLevel: 'AI Chat + 分析 + 执行操作',
+        recommended: true,
+        limits: {
+            hasOrg: true,
+            maxWorkspaces: 10,
+            maxMembers: -1,
+            platforms: ['*'],
+            monthlyAdSpend: 500000, // 月广告花费上限 $500K
+            creditsMonthly: 10000,
+            dataRetentionDays: -1
+        },
+        highlights: [
+            'AI Agent 执行操作（10,000 积分/月）',
+            '组织 + 10 空间 + 数据权限',
+            '支持 Meta、Google、TikTok 等平台媒体',
+            '接入广告账户 ≤ 50 个 · 实时同步',
+            'Agent 智能助手：一句话授权/协作/报告订阅/修改广告预算、竞价'
+        ]
     },
     ENTERPRISE: {
         key: 'ENTERPRISE',
-        name: '企业版',
+        name: 'Enterprise',
         price: -1,
+        priceYearly: -1,
         originalPrice: null,
-        priceUnit: '联系销售',
-        priceDesc: '适合大型企业',
-        limits: { maxOrgs: -1, maxWorkspaces: -1, maxMembers: -1, platforms: ['*'] },
-        highlights: ['不限组织数量', '不限工作空间', '不限成员人数', '接入全部广告平台', '专属客户成功经理']
+        priceUnit: 'Contact Sales',
+        priceUnitYearly: 'Contact Sales',
+        priceDesc: '大型 Agency、大客户 · 支持抽成模式',
+        aiLevel: '全部能力 + 定制 Agent',
+        limits: {
+            hasOrg: true,
+            maxWorkspaces: -1,
+            maxMembers: -1,
+            platforms: ['*'],
+            monthlyAdSpend: -1,
+            creditsMonthly: 100000,  // 起步额度，超出按合同追加
+            dataRetentionDays: -1
+        },
+        highlights: [
+            '定制 Agent + Autopilot（100,000 积分/月起）',
+            '组织 + 无限空间 + 数据权限',
+            'APP Skill 接入',
+            '接入广告账户不限 · 实时同步 + 专属数据管道',
+            '专属客户经理 + 优先技术支持',
+            '按需定价（固定月费或按量计费）'
+        ]
     }
 };
 
-/* ===== 用户个人套餐 ===== */
+/* ===== 积分消耗规则（Agent 使用计量） =====
+ * 展示在用量卡下方作为说明
+ */
+const CREDIT_RULES = [
+    { action: 'Chat 简单问答',       credits: 1,  example: '"昨天消耗多少？"' },
+    { action: 'Deep 分析',           credits: 3,  example: '"分析 A 计划下降原因"' },
+    { action: 'Autopilot 自动触发',  credits: 2,  example: '规则命中自动执行' },
+    { action: '执行操作',            credits: 5,  example: '"帮我给张三开通空间 A 的查看权限"' },
+    { action: '复盘报告生成',        credits: 10, example: '"生成客户 A 本月投放复盘"' }
+];
+
+/* ===== Add-ons（客单价拉升器） =====
+ * 独立售卖，主套餐门槛低 + 深度用户按需付费
+ * 参考：Madgicx Tracking Pro $49、Motion AI Studio、Triple Whale Moby AI Pro
+ */
+const ADDONS = {
+    CREDITS_TOPUP: {
+        key: 'CREDITS_TOPUP',
+        name: '积分增量包（一次性）',
+        price: 19,
+        priceUnit: '$19 / 1,000 积分',
+        desc: '一次性购买，用完为止（永不过期），主套餐积分不够时补充',
+        availableFor: ['FREE', 'PRO', 'TEAM'],
+        icon: '⚡',
+        oneTime: true
+    },
+    CREDITS_SUB: {
+        key: 'CREDITS_SUB',
+        name: '积分订阅包',
+        price: 49,
+        priceUnit: '$49 / month · 5,000 积分',
+        desc: '按月订阅额外积分，每月自动刷新（未用完不累积）',
+        availableFor: ['PRO', 'TEAM'],
+        icon: '🔋'
+    },
+    BULK_CREATION: {
+        key: 'BULK_CREATION',
+        name: '广告批量创编工具',
+        price: 39,
+        priceUnit: '$39 / month',
+        desc: '支持 Meta、Google、TikTok、Amazon 等平台的广告批量创建、复制、修改',
+        availableFor: ['TEAM', 'ENTERPRISE'],
+        icon: '📦'
+    },
+    EXTRA_WORKSPACES: {
+        key: 'EXTRA_WORKSPACES',
+        name: '额外工作空间',
+        price: 10,
+        priceUnit: '$10 / workspace / month',
+        desc: '超出套餐空间限制时按需加购',
+        availableFor: ['PRO', 'TEAM'],
+        icon: '🗂️'
+    }
+};
+
+/* ===== 用户个人套餐（新版 4 档：Free/Pro/Team/Enterprise，含 billingCycle） ===== */
 const USER_SUBSCRIPTIONS = [
-    { userId: 1, plan: 'PRO', startDate: '2025-09-01', expireDate: '2026-09-01', autoRenew: true },
-    { userId: 2, plan: 'STARTER', startDate: '2025-12-01', expireDate: '2026-12-01', autoRenew: true },
-    { userId: 3, plan: 'PRO', startDate: '2025-08-15', expireDate: '2026-08-15', autoRenew: false },
-    { userId: 4, plan: 'FREE', startDate: '2024-04-01', expireDate: null, autoRenew: false },
-    { userId: 5, plan: 'FREE', startDate: '2024-05-01', expireDate: null, autoRenew: false },
-    { userId: 6, plan: 'FREE', startDate: '2024-06-01', expireDate: null, autoRenew: false },
-    { userId: 7, plan: 'FREE', startDate: '2024-07-01', expireDate: null, autoRenew: false }
+    { userId: 1, plan: 'TEAM', billingCycle: 'yearly',  startDate: '2025-09-01', expireDate: '2026-09-01', autoRenew: true },
+    { userId: 2, plan: 'PRO',  billingCycle: 'monthly', startDate: '2025-12-01', expireDate: '2026-12-01', autoRenew: true },
+    { userId: 3, plan: 'TEAM', billingCycle: 'monthly', startDate: '2025-08-15', expireDate: '2026-08-15', autoRenew: false },
+    { userId: 4, plan: 'FREE', billingCycle: null,      startDate: '2024-04-01', expireDate: null,        autoRenew: false },
+    { userId: 5, plan: 'FREE', billingCycle: null,      startDate: '2024-05-01', expireDate: null,        autoRenew: false },
+    { userId: 6, plan: 'FREE', billingCycle: null,      startDate: '2024-06-01', expireDate: null,        autoRenew: false },
+    { userId: 7, plan: 'FREE', billingCycle: null,      startDate: '2024-07-01', expireDate: null,        autoRenew: false }
 ];
 
 /* ===== 组织套餐 ===== */
 const ORG_SUBSCRIPTIONS = [
-    { orgId: 1, plan: 'ENTERPRISE', startDate: '2024-01-01', expireDate: '2027-01-01', autoRenew: true, contractAmount: 50000 },
-    { orgId: 2, plan: 'STARTER', startDate: '2025-08-01', expireDate: '2026-08-01', autoRenew: true },
-    { orgId: 3, plan: 'PRO', startDate: '2025-09-01', expireDate: '2026-09-01', autoRenew: true }
+    { orgId: 1, plan: 'ENTERPRISE', billingCycle: 'yearly',  startDate: '2024-01-01', expireDate: '2027-01-01', autoRenew: true, contractAmount: 24000 },
+    { orgId: 2, plan: 'PRO',        billingCycle: 'monthly', startDate: '2025-08-01', expireDate: '2026-08-01', autoRenew: true },
+    { orgId: 3, plan: 'TEAM',       billingCycle: 'yearly',  startDate: '2025-09-01', expireDate: '2026-09-01', autoRenew: true }
 ];
 
-/* ===== 账单 ===== */
+/* ===== 账单（USD 计价，对齐出海市场） ===== */
 const BILLING_RECORDS = [
-    { id: 1, scope: 'user', scopeId: 1, plan: 'PRO', type: '续费', amount: 299, paidAt: '2025-09-01', method: '微信支付', invoice: 'INV-2025-09-001', status: 'paid' },
-    { id: 2, scope: 'user', scopeId: 1, plan: 'PRO', type: '初次订阅', amount: 299, paidAt: '2024-09-01', method: '支付宝', invoice: 'INV-2024-09-001', status: 'paid' },
-    { id: 10, scope: 'user', scopeId: 3, plan: 'PRO', type: '续费', amount: 299, paidAt: '2025-08-15', method: '信用卡', invoice: 'INV-2025-08-015', status: 'paid' },
-    { id: 20, scope: 'user', scopeId: 2, plan: 'STARTER', type: '初次订阅', amount: 99, paidAt: '2025-12-01', method: '微信支付', invoice: 'INV-2025-12-001', status: 'paid' },
-    { id: 100, scope: 'org', scopeId: 2, plan: 'STARTER', type: '续费', amount: 99, paidAt: '2025-08-01', method: '微信支付', invoice: 'INV-2025-08-100', status: 'paid' },
-    { id: 101, scope: 'org', scopeId: 2, plan: 'STARTER', type: '初次订阅', amount: 99, paidAt: '2024-08-01', method: '微信支付', invoice: 'INV-2024-08-100', status: 'paid' },
-    { id: 110, scope: 'org', scopeId: 3, plan: 'PRO', type: '续费', amount: 299, paidAt: '2025-09-01', method: '对公转账', invoice: 'INV-2025-09-110', status: 'paid' },
-    { id: 111, scope: 'org', scopeId: 3, plan: 'PRO', type: '从 STARTER 升级', amount: 200, paidAt: '2024-12-01', method: '对公转账', invoice: 'INV-2024-12-111', status: 'paid' },
-    { id: 112, scope: 'org', scopeId: 3, plan: 'STARTER', type: '初次订阅', amount: 99, paidAt: '2024-09-01', method: '对公转账', invoice: 'INV-2024-09-112', status: 'paid' },
-    { id: 120, scope: 'org', scopeId: 1, plan: 'ENTERPRISE', type: '年度合同', amount: 50000, paidAt: '2024-01-01', method: '对公转账', invoice: 'INV-2024-01-120', status: 'paid' },
-    { id: 121, scope: 'org', scopeId: 1, plan: 'ENTERPRISE', type: '月度账单', amount: 4999, paidAt: '2026-06-01', method: '对公账户', invoice: 'INV-2026-06-121', status: 'paid' },
-    { id: 122, scope: 'org', scopeId: 1, plan: 'ENTERPRISE', type: '月度账单', amount: 4999, paidAt: '2026-05-01', method: '对公账户', invoice: 'INV-2026-05-122', status: 'paid' },
-    { id: 123, scope: 'org', scopeId: 1, plan: 'ENTERPRISE', type: '月度账单', amount: 4999, paidAt: '2026-04-01', method: '对公账户', invoice: 'INV-2026-04-123', status: 'paid' },
-    { id: 124, scope: 'org', scopeId: 1, plan: 'ENTERPRISE', type: '月度账单', amount: 4999, paidAt: '2026-03-01', method: '对公账户', invoice: 'INV-2026-03-124', status: 'paid' },
-    { id: 125, scope: 'org', scopeId: 1, plan: 'ENTERPRISE', type: '月度账单', amount: 4999, paidAt: '2026-02-01', method: '对公账户', invoice: 'INV-2026-02-125', status: 'paid' }
+    // 用户订阅账单
+    { id: 1,   scope: 'user', scopeId: 1, plan: 'TEAM',       type: '年付续费',   amount: 1428,  paidAt: '2025-09-01', method: 'Stripe (Visa)', invoice: 'INV-2025-09-001', status: 'paid' },
+    { id: 2,   scope: 'user', scopeId: 1, plan: 'TEAM',       type: '初次订阅',   amount: 1428,  paidAt: '2024-09-01', method: 'Stripe (Visa)', invoice: 'INV-2024-09-001', status: 'paid' },
+    { id: 10,  scope: 'user', scopeId: 3, plan: 'TEAM',       type: '月付续费',   amount: 149,   paidAt: '2025-08-15', method: 'PayPal',        invoice: 'INV-2025-08-015', status: 'paid' },
+    { id: 20,  scope: 'user', scopeId: 2, plan: 'PRO',        type: '初次订阅',   amount: 29,    paidAt: '2025-12-01', method: 'Stripe (Card)', invoice: 'INV-2025-12-001', status: 'paid' },
+
+    // 组织订阅账单
+    { id: 100, scope: 'org',  scopeId: 2, plan: 'PRO',        type: '月付续费',   amount: 29,    paidAt: '2025-08-01', method: 'Stripe (Card)', invoice: 'INV-2025-08-100', status: 'paid' },
+    { id: 101, scope: 'org',  scopeId: 2, plan: 'PRO',        type: '初次订阅',   amount: 29,    paidAt: '2024-08-01', method: 'Stripe (Card)', invoice: 'INV-2024-08-100', status: 'paid' },
+    { id: 110, scope: 'org',  scopeId: 3, plan: 'TEAM',       type: '年付续费',   amount: 1428,  paidAt: '2025-09-01', method: 'Wire Transfer', invoice: 'INV-2025-09-110', status: 'paid' },
+    { id: 111, scope: 'org',  scopeId: 3, plan: 'TEAM',       type: '从 PRO 升级', amount: 120,  paidAt: '2024-12-01', method: 'Stripe (Card)', invoice: 'INV-2024-12-111', status: 'paid' },
+    { id: 112, scope: 'org',  scopeId: 3, plan: 'PRO',        type: '初次订阅',   amount: 29,    paidAt: '2024-09-01', method: 'Stripe (Card)', invoice: 'INV-2024-09-112', status: 'paid' },
+
+    // Enterprise 年度合同 + 月度账单
+    { id: 120, scope: 'org',  scopeId: 1, plan: 'ENTERPRISE', type: '年度合同',   amount: 24000, paidAt: '2024-01-01', method: 'Wire Transfer', invoice: 'INV-2024-01-120', status: 'paid' },
+    { id: 121, scope: 'org',  scopeId: 1, plan: 'ENTERPRISE', type: '月度账单',   amount: 2000,  paidAt: '2026-06-01', method: 'Wire Transfer', invoice: 'INV-2026-06-121', status: 'paid' },
+    { id: 122, scope: 'org',  scopeId: 1, plan: 'ENTERPRISE', type: '月度账单',   amount: 2000,  paidAt: '2026-05-01', method: 'Wire Transfer', invoice: 'INV-2026-05-122', status: 'paid' },
+    { id: 123, scope: 'org',  scopeId: 1, plan: 'ENTERPRISE', type: '月度账单',   amount: 2000,  paidAt: '2026-04-01', method: 'Wire Transfer', invoice: 'INV-2026-04-123', status: 'paid' },
+    { id: 124, scope: 'org',  scopeId: 1, plan: 'ENTERPRISE', type: '月度账单',   amount: 2000,  paidAt: '2026-03-01', method: 'Wire Transfer', invoice: 'INV-2026-03-124', status: 'paid' },
+    { id: 125, scope: 'org',  scopeId: 1, plan: 'ENTERPRISE', type: '月度账单',   amount: 2000,  paidAt: '2026-02-01', method: 'Wire Transfer', invoice: 'INV-2026-02-125', status: 'paid' },
+
+    // Add-on 账单
+    { id: 200, scope: 'org',  scopeId: 3, plan: 'TEAM',       type: 'Add-on · Amazon 批量创编', amount: 39, paidAt: '2025-09-01', method: 'Wire Transfer', invoice: 'INV-2025-09-201', status: 'paid' },
+    { id: 201, scope: 'org',  scopeId: 3, plan: 'TEAM',       type: 'Add-on · 达人营销标签',    amount: 19, paidAt: '2025-09-01', method: 'Wire Transfer', invoice: 'INV-2025-09-202', status: 'paid' },
+    { id: 202, scope: 'org',  scopeId: 3, plan: 'TEAM',       type: 'Add-on · 积分包 · 1,000',  amount: 19, paidAt: '2025-11-15', method: 'Stripe (Card)', invoice: 'INV-2025-11-202', status: 'paid' },
+    { id: 210, scope: 'org',  scopeId: 1, plan: 'ENTERPRISE', type: 'Add-on · 白牌品牌',        amount: 99, paidAt: '2026-06-01', method: 'Wire Transfer', invoice: 'INV-2026-06-210', status: 'paid' }
 ];
 
 /* ===== 用户 ===== */
 const USERS = [
-    { id: 1, name: '张三', email: 'zhangsan@example.com', personalPlan: 'PRO', registeredAt: '2024-01-01', disabled: false },
-    { id: 2, name: '李四', email: 'lisi@example.com', personalPlan: 'STARTER', registeredAt: '2024-02-01', disabled: false },
-    { id: 3, name: 'David', email: 'david@tec-do.com', personalPlan: 'PRO', registeredAt: '2024-03-01', disabled: false },
-    { id: 4, name: 'Grace', email: 'grace@example.com', personalPlan: 'FREE', registeredAt: '2024-04-01', disabled: false },
-    { id: 5, name: '王五', email: 'wangwu@example.com', personalPlan: 'FREE', registeredAt: '2024-05-01', disabled: false },
-    { id: 6, name: '小王', email: 'xiaowang@example.com', personalPlan: 'FREE', registeredAt: '2024-06-01', disabled: false },
-    { id: 7, name: 'Kiki', email: 'kiki@tec-do.com', personalPlan: 'FREE', registeredAt: '2024-07-01', disabled: false }
+    { id: 1, name: '张三',  email: 'zhangsan@example.com', personalPlan: 'TEAM',  registeredAt: '2024-01-01', disabled: false },
+    { id: 2, name: '李四',  email: 'lisi@example.com',     personalPlan: 'PRO',   registeredAt: '2024-02-01', disabled: false },
+    { id: 3, name: 'David', email: 'david@tec-do.com',     personalPlan: 'TEAM', registeredAt: '2024-03-01', disabled: false },
+    { id: 4, name: 'Grace', email: 'grace@example.com',    personalPlan: 'FREE',  registeredAt: '2024-04-01', disabled: false },
+    { id: 5, name: '王五',  email: 'wangwu@example.com',   personalPlan: 'FREE',  registeredAt: '2024-05-01', disabled: false },
+    { id: 6, name: '小王',  email: 'xiaowang@example.com', personalPlan: 'FREE',  registeredAt: '2024-06-01', disabled: false },
+    { id: 7, name: 'Kiki',  email: 'kiki@tec-do.com',      personalPlan: 'FREE',  registeredAt: '2024-07-01', disabled: false }
 ];
 
 /* ===== 组织 ===== */
 const ORGANIZATIONS = [
-    { id: 1, name: '钛动科技', ownerId: 1, plan: 'ENTERPRISE', createdAt: '2024-01-01' },
-    { id: 2, name: '张三工作室', ownerId: 1, plan: 'STARTER', createdAt: '2024-08-01' },
-    { id: 3, name: '创意公司', ownerId: 3, plan: 'PRO', createdAt: '2024-09-01' }
+    { id: 1, name: '钛动科技',   ownerId: 1, plan: 'ENTERPRISE', createdAt: '2024-01-01' },
+    { id: 2, name: '张三工作室', ownerId: 1, plan: 'PRO',        createdAt: '2024-08-01' },
+    { id: 3, name: '创意公司',   ownerId: 3, plan: 'TEAM',       createdAt: '2024-09-01' }
 ];
 
 /* ===== 用户-组织关系（企业角色 Admin / Member） ===== */
@@ -237,11 +386,20 @@ const WORKSPACE_RESOURCES = [
     { id: 7, workspaceId: 12, name: '子品牌 ROI 分析', type: '分析', owner: '李四', updatedAt: '昨天' }
 ];
 
-/* ===== 组织用量（示例） ===== */
+/* ===== 组织用量（示例，配合新套餐口径） =====
+ * 字段：
+ *   seats           — 已用席位（不设上限，仅展示）
+ *   credits         — 本月已用积分
+ *   creditsLimit    — 每月积分额度（-1 无限）
+ *   adSpend         — 本月已管理广告花费（USD）
+ *   adSpendLimit    — 每月广告花费上限（-1 无限）
+ *   workspaces      — 已用空间数
+ *   workspacesLimit — 空间上限（-1 无限）
+ */
 const ORG_USAGE = {
-    1: { seats: 23, seatsLimit: 50, aiTokens: 2400000, aiTokensLimit: 5000000, storage: 12, storageLimit: 50 },
-    2: { seats: 3, seatsLimit: 10, aiTokens: 800000, aiTokensLimit: 1000000, storage: 2, storageLimit: 10 },
-    3: { seats: 8, seatsLimit: 20, aiTokens: 1500000, aiTokensLimit: 3000000, storage: 5, storageLimit: 20 }
+    1: { seats: 23, credits: 42000, creditsLimit: 100000, adSpend: 4800000, adSpendLimit: -1,   workspaces: 5, workspacesLimit: -1 },  // Enterprise (积分合同定制)
+    2: { seats: 3,  credits: 960,   creditsLimit: 2000,  adSpend: 12800,  adSpendLimit: 50000,  workspaces: 1, workspacesLimit: 3  },  // Pro
+    3: { seats: 8,  credits: 3200,  creditsLimit: 10000, adSpend: 128000, adSpendLimit: 500000, workspaces: 3, workspacesLimit: 10 }   // Team
 };
 
 
