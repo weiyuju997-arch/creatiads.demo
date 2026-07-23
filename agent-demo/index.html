@@ -282,14 +282,56 @@ body {
 }
 .hero-send-btn:hover { transform: scale(1.05); }
 
-/* 欢迎页轻量小卡片（一行 5 个） */
+/* 欢迎页轻量小卡片（4 列，超出换行） */
 .quick-actions.quick-actions-hero {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   max-width: 720px;
   margin: 12px auto 0;
   padding: 0 32px;
+}
+.action-subtitle-sm {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.template-tag {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 9.5px;
+  color: #4338ca;
+  background: #eef2ff;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.template-subscribe-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: transparent;
+  color: #9ca3af;
+  border: none;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+}
+.action-card:hover .template-subscribe-btn { display: flex; }
+.template-subscribe-btn:hover {
+  background: #eef2ff;
+  color: #4338ca;
 }
 .quick-actions-hero .action-card {
   padding: 14px 12px;
@@ -1625,6 +1667,50 @@ body {
   white-space: nowrap;
 }
 .sub-channel-target strong { color: #111827; }
+/* 积分消耗提示 */
+.sub-credits-hint {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.sub-credits-hint.warn {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.sub-credits-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+.sub-credits-row svg { color: #6b7280; flex-shrink: 0; }
+.sub-credits-row strong { color: #111827; font-weight: 600; }
+.sub-credits-balance {
+  margin-left: auto;
+  color: #6b7280;
+  font-size: 11.5px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+.sub-credits-hint.warn .sub-credits-balance {
+  color: #b45309;
+  border-color: #fcd34d;
+  background: #fef3c7;
+}
+.sub-credits-note {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 4px;
+  padding-left: 18px;
+}
+
 .sub-modal-actions {
   display: flex;
   gap: 10px;
@@ -1715,6 +1801,60 @@ body {
   font-size: 14px;
   gap: 10px;
 }
+/* 订阅面板分组 */
+.sub-panel-section { margin-bottom: 18px; }
+.sub-panel-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 2px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 10px;
+}
+.sub-panel-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.2px;
+}
+.sub-panel-section-count {
+  font-size: 11px;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 1px 6px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+.sub-panel-section-empty {
+  font-size: 12px;
+  color: #d1d5db;
+  padding: 12px 2px 4px;
+}
+
+/* 订阅项来源角标 */
+.sub-item-src-badge {
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 6px;
+  line-height: 1.4;
+}
+.sub-item-src-badge.official {
+  background: #eef2ff;
+  color: #4338ca;
+}
+.sub-item-src-badge.user {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.sub-item--official {
+  border-color: #e0e7ff;
+}
+
 .sub-item {
   border: 1.5px solid #e5e7eb;
   border-radius: 12px;
@@ -1778,6 +1918,11 @@ body {
   border-radius: 6px;
   font-size: 11.5px;
   color: #374151;
+}
+.sub-item-tag--credits {
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 500;
 }
 .sub-item-actions {
   display: flex;
@@ -1914,63 +2059,7 @@ body {
 
     <!-- 通用模板面板 -->
     <div class="quick-panel active" id="quickPanelTemplates">
-    <div class="quick-actions quick-actions-hero" id="quickActionsGrid">
-      <div class="action-card action-card--builtin" onclick="selectQuickAction('账号概览')">
-        <div class="action-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <rect x="3" y="4" width="18" height="16" rx="2"/>
-            <line x1="3" y1="9" x2="21" y2="9"/>
-            <line x1="9" y1="9" x2="9" y2="20"/>
-          </svg>
-        </div>
-        <div class="action-title">账号概览</div>
-        <div class="action-subtitle">Account Overview</div>
-      </div>
-
-      <div class="action-card action-card--builtin" onclick="selectQuickAction('广告疲劳')">
-        <div class="action-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M12 20h9"/>
-            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-          </svg>
-        </div>
-        <div class="action-title">广告疲劳</div>
-        <div class="action-subtitle">Ad Fatigue</div>
-      </div>
-
-      <div class="action-card action-card--builtin" onclick="selectQuickAction('广告系列表现')">
-        <div class="action-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
-        </div>
-        <div class="action-title">广告系列表现</div>
-        <div class="action-subtitle">Campaign Performance</div>
-      </div>
-
-      <div class="action-card action-card--builtin" onclick="selectQuickAction('优胜素材')">
-        <div class="action-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <path d="M9 15l2 2 4-4"/>
-          </svg>
-        </div>
-        <div class="action-title">优胜素材</div>
-        <div class="action-subtitle">Top Creatives</div>
-      </div>
-
-      <div class="action-card action-card--builtin" onclick="selectQuickAction('素材元素')">
-        <div class="action-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-        </div>
-        <div class="action-title">素材元素</div>
-        <div class="action-subtitle">Creative Elements</div>
-      </div>
-    </div>
+      <div class="quick-actions quick-actions-hero" id="quickActionsGrid"></div>
     </div>
     <!-- /通用模板面板 -->
 
@@ -2079,6 +2168,14 @@ body {
           <div class="sub-channel-target">推送至 <strong id="subTargetEmail">martin.wei@tec-do.com</strong> 的 Creatiads 机器人</div>
         </div>
       </div>
+    </div>
+    <div class="sub-credits-hint" id="subCreditsHint">
+      <div class="sub-credits-row">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span>预计每次推送消耗 <strong>15 积分</strong> · <span id="subCreditsPeriod">按每日推送计算，本月约 450 积分</span></span>
+        <span class="sub-credits-balance" id="subCreditsBalance">余额 8,320</span>
+      </div>
+      <div class="sub-credits-note">余额不足时自动跳过推送并通知你</div>
     </div>
     <div class="sub-modal-actions">
       <button class="sub-btn secondary" onclick="closeSubModal()">取消</button>
@@ -2382,10 +2479,185 @@ function handleKeyDown(event) {
   }
 }
 
-// 快捷操作：欢迎页直接触发一次分析
-function selectQuickAction(action) {
+// ====== 通用模板配置（含深度业务模板） ======
+const OFFICIAL_TEMPLATES = [
+  // 基础通用（点一下就跑一次；也可以订阅）
+  {
+    id: 'account-overview',
+    name: '账号概览',
+    subtitle: '大盘核心指标',
+    prompt: '请生成今天的账号大盘概览：\n1. 花费、展示、点击、CTR、CPA、ROAS 六个核心指标的当日值 vs 前一日的变化；\n2. 每个指标标注涨跌幅（绝对值 + 百分比）；\n3. 找出变化最大的 3 个账户并说明贡献比例；\n4. 结尾给出一句话总结（今日整体状态：健康/预警/异常）。',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/></svg>',
+    meta: {
+      topic: '账号概览分析',
+      dataScope: '全账户',
+      depth: '2 层下钻：大盘 → 账户',
+      timeWindow: '对比昨日 vs 前日',
+    },
+    defaultFreq: 'daily',
+    defaultTime: '09:00',
+  },
+  {
+    id: 'ad-fatigue',
+    name: '广告疲劳',
+    subtitle: '素材/受众衰退',
+    prompt: '请识别过去 7 天出现疲劳信号的广告：\n1. 疲劳定义：CTR 环比连续下降 ≥ 3 天，或频次 > 3 且 CVR 下降 ≥ 20%；\n2. 输出 Top 10 疲劳素材（素材名 + 所属广告系列 + 花费占比 + CTR/CVR 走势）；\n3. 按素材类型（视频/图片/轮播）分组统计疲劳率；\n4. 每个素材给出建议：暂停 / 替换 / 保持观察。',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+    meta: {
+      topic: '广告疲劳识别',
+      dataScope: '全账户',
+      depth: '3 层下钻：大盘 → 账户 → 素材',
+      timeWindow: '最近 7 天趋势',
+    },
+    defaultFreq: 'weekly',
+    defaultTime: '09:00',
+  },
+  {
+    id: 'campaign-performance',
+    name: '广告系列表现',
+    subtitle: '计划维度对比',
+    prompt: '请给出过去 7 天广告系列表现对比：\n1. 按花费降序列出 Top 15 广告系列，展示花费、转化、CPA、ROAS；\n2. 每个广告系列标注环比变化（花费 / ROAS）；\n3. 分组统计：ROAS ≥ 2 的为"高效"、1-2 为"稳定"、<1 为"低效"；\n4. 给出 3 条优化建议（比如低效计划降预算、高效计划加预算）。',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+    meta: {
+      topic: '广告系列表现分析',
+      dataScope: '全账户',
+      depth: '3 层下钻：大盘 → 账户 → 广告系列',
+      timeWindow: '最近 7 天趋势',
+    },
+    defaultFreq: 'weekly',
+    defaultTime: '09:00',
+  },
+  {
+    id: 'top-creatives',
+    name: '优胜素材',
+    subtitle: 'Top CTR / CVR',
+    prompt: '请找出过去 7 天表现最好的素材：\n1. 按花费加权的综合分（CTR × 0.3 + CVR × 0.5 + ROAS × 0.2）排序，输出 Top 10 素材；\n2. 每个素材给出：素材缩略图/名称、所属广告系列、花费、CTR、CVR、ROAS；\n3. 归纳这些优胜素材的共同特征（视频时长、卖点结构、开头 3 秒画面等）；\n4. 建议：哪些素材可以放大预算、可衍生做变体。',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>',
+    meta: {
+      topic: '优胜素材归因',
+      dataScope: '全账户',
+      depth: '4 层下钻：大盘 → 账户 → 广告系列 → 素材',
+      timeWindow: '最近 7 天趋势',
+    },
+    defaultFreq: 'weekly',
+    defaultTime: '09:00',
+  },
+  {
+    id: 'creative-elements',
+    name: '素材元素',
+    subtitle: '要素归因',
+    prompt: '请对过去 14 天的素材做要素级归因：\n1. 拆解素材要素维度：视频时长、开头场景（人物/产品/文字）、卖点类型（价格/功能/情感）、CTA 位置、语言；\n2. 每个要素维度输出高/低表现分组（按 CVR 或 ROAS）；\n3. 找出显著相关性（比如"视频时长 15s 的 ROAS 比 30s 高 40%"这种结论）；\n4. 给出 3 条素材制作建议。',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    meta: {
+      topic: '素材元素归因分析',
+      dataScope: '全账户',
+      depth: '4 层下钻：大盘 → 账户 → 广告系列 → 素材',
+      timeWindow: '最近 14 天趋势',
+    },
+    defaultFreq: 'weekly',
+    defaultTime: '09:00',
+  },
+  // 深度业务模板（每次推送用最新数据重跑，天然适合订阅）
+  {
+    id: 'high-roas-top10',
+    name: '高 ROAS 计划 Top10',
+    subtitle: '每周高回报计划推荐',
+    prompt: '请扫描当前所有账户过去 7 天的数据，输出 ROAS Top 10 广告计划：\n1. 筛选条件：花费 ≥ $200（避免小样本干扰）、投放天数 ≥ 3 天；\n2. 按 ROAS 降序列出 Top 10，每条包含：计划名、所属账户、花费、转化数、ROAS、CVR、主要投放地区；\n3. 归纳这 10 条计划的共同配置特征：\n   - 出价策略（转化最大化 / 目标 CPA / 手动出价）\n   - 受众定向（兴趣 / 相似受众 / 再营销）\n   - 版位（Feed / Story / Reels / 自动）\n   - 素材类型（视频 / 图片 / 轮播）\n   - 投放地区聚集度\n4. 给出可复制的推荐配置模板（比如"高 ROAS 计划普遍使用相似受众 + 自动版位 + 15s 短视频"）。',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L14.4 8.6L21 9.3L16 14L17.2 21L12 17.8L6.8 21L8 14L3 9.3L9.6 8.6L12 2Z"/></svg>',
+    tag: '深度分析',
+    meta: {
+      topic: '高 ROAS 计划配置推荐',
+      dataScope: '全账户',
+      depth: '筛选 Top 10 计划 + 配置特征归纳',
+      timeWindow: '最近 7 天',
+    },
+    defaultFreq: 'weekly',
+    defaultTime: '09:00',
+  },
+  {
+    id: 'category-weekly',
+    name: '品类周报',
+    subtitle: '高表现品类识别',
+    prompt: '请按品类维度生成本周（周一到周日）品类表现报告：\n1. 按品类聚合花费、GMV、订单数、ROAS、CVR，输出本周 vs 上周对比；\n2. 高增长品类：ROAS 环比提升 ≥ 20% 且花费 ≥ $500 的 Top 5；\n3. 衰退品类：ROAS 环比下降 ≥ 20% 或 CVR 下降 ≥ 30% 的品类（无花费下限）；\n4. 对高增长品类：识别是"整体品类需求上升"还是"某个爆款单品拉动"（对比品类内 SKU 分布变化）；\n5. 对衰退品类：给出可能原因（素材老化 / 竞争加剧 / 季节性 / 库存不足）；\n6. 结尾给出下周预算分配建议。',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+    tag: '深度分析',
+    meta: {
+      topic: '品类周表现分析',
+      dataScope: '全品类 · 全账户',
+      depth: '品类 → 计划 → 素材',
+      timeWindow: '本周 vs 上周',
+    },
+    defaultFreq: 'weekly',
+    defaultTime: '09:00',
+  },
+  {
+    id: 'budget-alert',
+    name: '预算异常预警',
+    subtitle: '花费/预算比预警',
+    prompt: '请扫描今日所有账户的花费/预算情况，输出预警列表：\n1. 检查项 1：当前时段花费 > 日预算 × 当前时段占比 × 130%（超速消耗），列出账户和计划；\n2. 检查项 2：日预算已消耗 ≥ 90% 但距离 24:00 仍有 ≥ 4 小时（可能提前跑完预算断投），列出账户；\n3. 检查项 3：日花费为 0 但计划状态为"投放中"（异常停投），列出账户和计划；\n4. 检查项 4：单账户日花费环比暴增 ≥ 50%（可能预算被误改），列出账户；\n5. 每条预警包含：账户名、计划名（如果适用）、当前状态、建议操作（暂停 / 调整预算 / 检查计费）；\n6. 无预警时直接输出"今日所有账户预算使用正常"。',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    tag: '深度分析',
+    meta: {
+      topic: '预算异常预警',
+      dataScope: '全账户',
+      depth: '账户级 → 广告系列级',
+      timeWindow: '当日实时',
+    },
+    defaultFreq: 'daily',
+    defaultTime: '09:00',
+  },
+];
+
+function templateById(id) {
+  return OFFICIAL_TEMPLATES.find(t => t.id === id);
+}
+
+function renderQuickTemplates() {
+  const grid = document.getElementById('quickActionsGrid');
+  if (!grid) return;
+  grid.innerHTML = OFFICIAL_TEMPLATES.map(tpl => {
+    const tagHtml = tpl.tag ? `<span class="template-tag">${escapeHtml(tpl.tag)}</span>` : '';
+    return `
+      <div class="action-card action-card--builtin" data-tpl-id="${tpl.id}" onclick="runTemplate('${tpl.id}')" title="点击立即运行一次">
+        <button class="template-subscribe-btn" onclick="event.stopPropagation();subscribeTemplate('${tpl.id}')" title="订阅推送">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <div class="action-icon">${tpl.icon}</div>
+        <div class="action-title">${escapeHtml(tpl.name)}</div>
+        <div class="action-subtitle-sm">${escapeHtml(tpl.subtitle)}</div>
+        ${tagHtml}
+      </div>
+    `;
+  }).join('');
+}
+
+function runTemplate(id) {
+  const tpl = templateById(id);
+  if (!tpl) return;
   if (!inChatMode) {
-    // 欢迎页：直接发出去
+    const input = document.getElementById('chatInput');
+    input.value = tpl.prompt;
+    sendMessage();
+    return;
+  }
+  const input = document.getElementById('chatInput');
+  input.value = tpl.prompt;
+  input.focus();
+}
+
+// 订阅通用模板（跳过选段模式，直接进入订阅弹窗）
+function subscribeTemplate(id) {
+  const tpl = templateById(id);
+  if (!tpl) return;
+  openSubModal('', tpl.meta, { source: 'official', templateId: tpl.id, name: tpl.name, defaultFreq: tpl.defaultFreq, defaultTime: tpl.defaultTime });
+}
+
+// 兼容旧代码入口：selectQuickAction 保留但走 runTemplate 找匹配的名字
+function selectQuickAction(action) {
+  const tpl = OFFICIAL_TEMPLATES.find(t => t.name === action);
+  if (tpl) return runTemplate(tpl.id);
+  // fallback：老逻辑
+  if (!inChatMode) {
     const input = document.getElementById('chatInput');
     input.value = `帮我分析${action}`;
     sendMessage();
@@ -2552,6 +2824,39 @@ function selectFreq(freq) {
   const monthday = document.getElementById('subMonthdaySelect');
   weekday.style.display = freq === 'weekly' ? 'block' : 'none';
   monthday.style.display = freq === 'monthly' ? 'block' : 'none';
+  updateCreditsHint();
+}
+
+// ====== 积分预估提示 ======
+const CREDITS_PER_PUSH = 15;           // 单次推送消耗（后续按模板复杂度分档）
+const USER_CREDITS_BALANCE = 8320;     // Mock：当前用户积分余额
+
+function estimateMonthlyPushCount(freq) {
+  if (freq === 'weekly') return 4;     // 每周 4 次/月
+  if (freq === 'monthly') return 1;
+  return 30;                           // 每日按 30 次估算
+}
+
+function updateCreditsHint() {
+  const hint = document.getElementById('subCreditsHint');
+  if (!hint) return;
+  const period = document.getElementById('subCreditsPeriod');
+  const balanceEl = document.getElementById('subCreditsBalance');
+
+  const perPush = CREDITS_PER_PUSH;
+  const monthlyCount = estimateMonthlyPushCount(currentFreq);
+  const monthlyTotal = perPush * monthlyCount;
+
+  const freqLabel = currentFreq === 'weekly' ? '每周推送' : currentFreq === 'monthly' ? '每月推送' : '每日推送';
+  if (period) period.textContent = `按${freqLabel}计算，本月约 ${monthlyTotal.toLocaleString()} 积分`;
+  if (balanceEl) balanceEl.textContent = `余额 ${USER_CREDITS_BALANCE.toLocaleString()}`;
+
+  // 余额低于月消耗 → 警告态
+  if (USER_CREDITS_BALANCE < monthlyTotal) {
+    hint.classList.add('warn');
+  } else {
+    hint.classList.remove('warn');
+  }
 }
 
 function getFreqLabel(sub) {
@@ -2688,26 +2993,38 @@ function runSkill(id) {
   sendMessage();
 }
 
-function openSubModal(contentText, meta) {
+// 当前订阅上下文：{ source, templateId?, name?, defaultFreq?, defaultTime? }
+let subCurrentContext = { source: 'user' };
+
+function openSubModal(contentText, meta, ctx) {
   initMonthdaySelect();
   subCurrentContent = contentText || '';
+  subCurrentContext = Object.assign({ source: 'user' }, ctx || {});
+  const isOfficial = subCurrentContext.source === 'official';
+
   // 生成或使用传入的分析逻辑摘要
   const m = meta || generateAnalysisMeta(contentText);
   renderAnalysisMeta(m);
-  // 渲染上次分析结果（折叠）—— 新建订阅时才展示"首次分析结果"折叠区
+
+  // 渲染"首次分析结果"折叠区（仅对用户段落订阅有意义；官方模板每次都用最新数据跑）
   const lastResultEl = document.getElementById('subLastResult');
   const lastContentEl = document.getElementById('subLastResultContent');
-  const plainText = contentText.replace(/<[^>]+>/g, '');
+  const plainText = (contentText || '').replace(/<[^>]+>/g, '');
   const paragraphs = plainText.split(/\n+/).filter(s => s.trim());
   lastContentEl.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
-  lastResultEl.style.display = paragraphs.length ? '' : 'none';
+  lastResultEl.style.display = (paragraphs.length && !isOfficial) ? '' : 'none';
+
   // 隐藏「段落编辑」区（新建订阅不需要）
   const editWrap = document.getElementById('subEditParagraphs');
   if (editWrap) editWrap.style.display = 'none';
-  // 重置表单
-  document.getElementById('subNameInput').value = m.topic || '';
-  document.getElementById('subTimeInput').value = '09:00';
-  selectFreq('daily');
+
+  // 预填表单
+  const nameInput = document.getElementById('subNameInput');
+  nameInput.value = subCurrentContext.name || m.topic || '';
+  document.getElementById('subTimeInput').value = subCurrentContext.defaultTime || '09:00';
+  selectFreq(subCurrentContext.defaultFreq || 'daily');
+  updateCreditsHint();
+
   // 重置确认按钮
   document.querySelector('#subModal .sub-btn.primary').onclick = confirmSubscribe;
   document.getElementById('subModal').classList.add('active');
@@ -2784,19 +3101,25 @@ function toggleLastResult(btn) {
 }
 
 function confirmSubscribe() {
-  const name = document.getElementById('subNameInput').value.trim() || '每日广告报告';
+  const ctx = subCurrentContext || { source: 'user' };
+  const isOfficial = ctx.source === 'official';
+  const tpl = isOfficial ? templateById(ctx.templateId) : null;
+  const name = document.getElementById('subNameInput').value.trim() || (tpl ? tpl.name : '每日广告报告');
   const time = document.getElementById('subTimeInput').value || '09:00';
   const weekday = parseInt(document.getElementById('subWeekdaySelect').value);
   const monthday = parseInt(document.getElementById('subMonthdaySelect').value) || 1;
-  const meta = generateAnalysisMeta(subCurrentContent);
+  // 官方模板：直接用模板的 meta；用户段落订阅：从内容识别
+  const meta = tpl ? tpl.meta : generateAnalysisMeta(subCurrentContent);
   const sub = {
     id: Date.now(),
+    source: ctx.source,                    // 'official' | 'user'
+    templateId: ctx.templateId || null,    // 仅官方订阅
     name,
     freq: currentFreq,
     time,
     weekday,
     monthday,
-    content: subCurrentContent,
+    content: isOfficial ? '' : subCurrentContent,  // 官方模板每次跑最新数据，不存快照
     meta,
     enabled: true,
     createdAt: new Date().toLocaleDateString('zh-CN')
@@ -2816,31 +3139,21 @@ function closeSubPanel() {
   document.getElementById('subPanel').classList.remove('active');
 }
 
-function renderSubPanel() {
-  const body = document.getElementById('subPanelBody');
-  if (subscriptions.length === 0) {
-    body.innerHTML = `
-      <div class="sub-empty">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
-        <span>暂无订阅报告</span>
-        <span style="font-size:12px;color:#d1d5db;">在 Agent 回答后点击「订阅此报告」添加</span>
-      </div>`;
-    return;
-  }
-  body.innerHTML = subscriptions.map(sub => {
-    const meta = sub.meta || {};
-    return `
-    <div class="sub-item" id="subItem${sub.id}">
+function renderSubItem(sub) {
+  const meta = sub.meta || {};
+  const isOfficial = sub.source === 'official';
+  const badgeHtml = isOfficial
+    ? '<span class="sub-item-src-badge official">官方</span>'
+    : '<span class="sub-item-src-badge user">自定义</span>';
+  return `
+    <div class="sub-item ${isOfficial ? 'sub-item--official' : ''}" id="subItem${sub.id}">
       <div class="sub-item-header">
-        <div class="sub-item-name">${escapeHtml(sub.name)}</div>
+        <div class="sub-item-name">${escapeHtml(sub.name)} ${badgeHtml}</div>
         <button class="sub-item-toggle ${sub.enabled ? 'on' : ''}" onclick="toggleSub(${sub.id})" title="${sub.enabled ? '点击暂停' : '点击启用'}"></button>
       </div>
       <div style="padding:0 2px;margin-bottom:6px;">
         <div style="font-size:11.5px;color:#374151;font-weight:500;margin-bottom:3px;">${meta.topic || sub.name}</div>
-        <div style="font-size:10.5px;color:#9ca3af;">异常指标（自动识别）</div>
+        <div style="font-size:10.5px;color:#9ca3af;">${isOfficial ? '每次推送用最新数据重新分析' : '异常指标（自动识别）'}</div>
       </div>
       <div class="sub-item-meta">
         <span class="sub-item-tag">
@@ -2851,14 +3164,39 @@ function renderSubPanel() {
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="4" rx="0.5"/><rect x="10" y="3" width="4" height="4" rx="0.5"/><rect x="3" y="10" width="4" height="4" rx="0.5"/><rect x="10" y="10" width="4" height="4" rx="0.5"/></svg>
           飞书
         </span>
+        <span class="sub-item-tag sub-item-tag--credits" title="每次推送消耗 ${CREDITS_PER_PUSH} 积分">
+          ≈ ${CREDITS_PER_PUSH} 积分/次
+        </span>
         <span style="margin-left:auto;font-size:11px;color:#d1d5db;">${sub.createdAt}</span>
       </div>
       <div class="sub-item-actions">
-        <button class="sub-item-action-btn" onclick="editSub(${sub.id})">编辑</button>
-        <button class="sub-item-action-btn delete" onclick="deleteSub(${sub.id})">删除</button>
+        ${isOfficial ? '' : `<button class="sub-item-action-btn" onclick="editSub(${sub.id})">编辑</button>`}
+        <button class="sub-item-action-btn delete" onclick="deleteSub(${sub.id})">${isOfficial ? '取消订阅' : '删除'}</button>
       </div>
     </div>`;
-  }).join('');
+}
+
+function renderSubPanel() {
+  const body = document.getElementById('subPanelBody');
+  if (subscriptions.length === 0) {
+    body.innerHTML = `
+      <div class="sub-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span>暂无订阅报告</span>
+        <span style="font-size:12px;color:#d1d5db;">在通用模板订阅推送，或在 Agent 回答后订阅自定义段落</span>
+      </div>`;
+    return;
+  }
+  // 扁平列表；官方订阅排在前面，卡片名后带小 badge 区分
+  const sorted = [...subscriptions].sort((a, b) => {
+    const aOff = a.source === 'official' ? 0 : 1;
+    const bOff = b.source === 'official' ? 0 : 1;
+    return aOff - bOff;
+  });
+  body.innerHTML = sorted.map(renderSubItem).join('');
 }
 
 function toggleSub(id) {
@@ -2993,6 +3331,7 @@ document.getElementById('subPanel').addEventListener('click', e => { if (e.targe
 
 loadSubscriptions();
 updateSubBadge();
+renderQuickTemplates();
 renderMySkills();
 
 // 在 iframe 中时隐藏自身侧边栏（由 index.html 的侧边栏替代）
