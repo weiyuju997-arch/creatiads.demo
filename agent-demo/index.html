@@ -1153,11 +1153,30 @@ body {
   opacity: 0.5;
   position: relative;
 }
+/* 未选中：左侧空心圆，视觉提示"可勾选" */
+.msg-row.agent.selecting .msg-bubble p::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 50%;
+  transition: all 0.15s;
+  box-sizing: border-box;
+}
 .msg-row.agent.selecting .msg-bubble p:hover {
   opacity: 1;
   background: #f3f4f6;
   border-color: #d1d5db;
 }
+.msg-row.agent.selecting .msg-bubble p:hover::before {
+  border-color: #6b7280;
+}
+/* 已选中：实心黑圈 + 白色对勾 */
 .msg-row.agent.selecting .msg-bubble p.selected {
   opacity: 1;
   background: #f9fafb;
@@ -1166,15 +1185,11 @@ body {
 }
 .msg-row.agent.selecting .msg-bubble p.selected::before {
   content: '✓';
-  position: absolute;
-  left: -22px;
-  top: 50%;
-  transform: translateY(-50%);
   width: 18px;
   height: 18px;
+  border: none;
   background: #111827;
   color: white;
-  border-radius: 50%;
   font-size: 11px;
   font-weight: 700;
   display: flex;
@@ -1236,6 +1251,10 @@ body {
   color: #9ca3af;
   flex: 1;
 }
+.select-confirm-bar .sc-spacer {
+  flex: 1;
+  min-width: 12px;
+}
 .select-confirm-bar .sc-btn {
   height: 32px;
   padding: 0 14px;
@@ -1257,6 +1276,45 @@ body {
   color: white;
 }
 .select-confirm-bar .sc-btn.confirm:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+.select-confirm-bar .sc-btn.select-all {
+  background: #ffffff;
+  color: #374151;
+  border: 1.5px solid #e5e7eb;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.select-confirm-bar .sc-btn.select-all:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #111827;
+}
+.select-confirm-bar .sc-btn.select-all svg { color: #6b7280; }
+.select-confirm-bar .sc-btn.select-all:hover svg { color: #111827; }
+.select-confirm-bar .sc-btn.ai-pick {
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1.5px solid #c7d2fe;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+.select-confirm-bar .sc-btn.ai-pick:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+  transform: translateY(-1px);
+}
+.select-confirm-bar .sc-btn.ai-pick.ai-pick-flash {
+  animation: aiPickPulse 0.6s ease;
+}
+@keyframes aiPickPulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(99,102,241,0.15); }
+  100% { transform: scale(1); }
+}
+
 .select-confirm-bar .sc-btn.confirm:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -1543,6 +1601,41 @@ body {
   color: #b45309;
 }
 
+/* AI 一键精选：承诺卡 */
+.sub-ai-summary-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+.sub-ai-summary-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #4338ca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(67,56,202,0.12);
+}
+.sub-ai-summary-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #3730a3;
+  margin-bottom: 2px;
+}
+.sub-ai-summary-desc {
+  font-size: 11.5px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
 /* 上次结论折叠区 */
 .sub-last-result {
   margin-bottom: 16px;
@@ -1631,7 +1724,89 @@ body {
   flex: 1;
 }
 
-/* 锁定的渠道卡片 */
+/* 推送渠道多选 */
+.sub-field-hint {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-left: 6px;
+}
+.sub-channel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sub-channel-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sub-channel-item:hover { border-color: #d1d5db; background: #fafafa; }
+.sub-channel-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #111827;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sub-channel-item input[type="checkbox"]:checked ~ .sub-channel-info .sub-channel-name {
+  color: #111827;
+  font-weight: 600;
+}
+.sub-channel-item .sub-channel-icon {
+  width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sub-channel-item .sub-channel-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sub-channel-item .sub-channel-name { font-size: 13px; font-weight: 500; color: #4b5563; }
+.sub-channel-item .sub-channel-target {
+  font-size: 11.5px;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sub-channel-email-input {
+  padding: 10px 12px;
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  border-radius: 10px;
+}
+.sub-channel-email-input input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-family: inherit;
+  outline: none;
+}
+.sub-channel-email-input input:focus { border-color: #374151; }
+.sub-channel-email-hint {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 6px;
+}
+
+/* 保留旧样式兼容（渐进删除） */
 .sub-channel-locked {
   display: flex;
   align-items: center;
@@ -2119,6 +2294,17 @@ body {
       <div class="sub-edit-paragraphs-hint" id="subEditParagraphsHint"></div>
     </div>
 
+    <!-- AI 一键精选：承诺卡（点击 AI 一键精选进入订阅时才展示） -->
+    <div class="sub-ai-summary-note" id="subAiSummaryNote" style="display:none;">
+      <div class="sub-ai-summary-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+      </div>
+      <div class="sub-ai-summary-text">
+        <div class="sub-ai-summary-title">AI 一键精选</div>
+        <div class="sub-ai-summary-desc">每次推送时，Agent 会自动为你精炼出重点结论和建议动作</div>
+      </div>
+    </div>
+
     <div class="sub-last-result" id="subLastResult">
       <div class="sub-last-result-toggle" onclick="toggleLastResult(this)">
         <span class="toggle-arrow">▼</span>
@@ -2158,14 +2344,33 @@ body {
       </div>
     </div>
     <div class="sub-field">
-      <label>推送渠道</label>
-      <div class="sub-channel-locked">
-        <div class="sub-channel-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        </div>
-        <div class="sub-channel-info">
-          <div class="sub-channel-name">飞书</div>
-          <div class="sub-channel-target">推送至 <strong id="subTargetEmail">martin.wei@tec-do.com</strong> 的 Creatiads 机器人</div>
+      <label>推送渠道 <span class="sub-field-hint">可多选，同时推送到多个渠道</span></label>
+      <div class="sub-channel-list">
+        <label class="sub-channel-item" id="subChannelFeishu">
+          <input type="checkbox" id="subChannelFeishuCheck" checked onchange="toggleChannel('feishu')">
+          <span class="sub-channel-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </span>
+          <span class="sub-channel-info">
+            <span class="sub-channel-name">飞书</span>
+            <span class="sub-channel-target">推送至 <strong id="subTargetEmail">martin.wei@tec-do.com</strong> 的 Creatiads 机器人</span>
+          </span>
+        </label>
+
+        <label class="sub-channel-item" id="subChannelEmail">
+          <input type="checkbox" id="subChannelEmailCheck" onchange="toggleChannel('email')">
+          <span class="sub-channel-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </span>
+          <span class="sub-channel-info">
+            <span class="sub-channel-name">邮箱</span>
+            <span class="sub-channel-target">发送 HTML 报告到指定邮箱</span>
+          </span>
+        </label>
+
+        <div class="sub-channel-email-input" id="subChannelEmailInputWrap" style="display:none;">
+          <input type="text" id="subChannelEmailInput" placeholder="收件邮箱，多个用逗号或空格分隔，如 a@x.com, b@x.com" value="martin.wei@tec-do.com">
+          <div class="sub-channel-email-hint">默认为登录邮箱，可修改；支持多个收件人</div>
         </div>
       </div>
     </div>
@@ -2376,7 +2581,7 @@ function typeAgentReply(row, html) {
     if (idx >= parts.length) {
       timeEl.textContent = timeStr;
       meta.style.display = 'flex';
-      // 绑定订阅按钮：进入选段模式
+      // 绑定订阅按钮：进入选段模式（在 chat 页面就选好要推送的内容）
       const subBtn = row.querySelector('.msg-subscribe-btn');
       if (subBtn) subBtn.onclick = () => enterSelectMode(row);
       scrollChatToBottom();
@@ -2710,6 +2915,13 @@ function clearAll() {
 renderConversations();
 
 // ====== 选段订阅模式 ======
+// 从消息触发订阅（不进选段模式，直接把消息完整内容作为快照传入订阅弹窗）
+function subscribeFromMessage(row) {
+  const paras = row.querySelectorAll('.msg-bubble p');
+  const html = Array.from(paras).map(p => p.outerHTML).join('');
+  openSubModal(html, undefined, { source: 'user' });
+}
+
 let selectModeRow = null;
 
 function enterSelectMode(row) {
@@ -2740,7 +2952,15 @@ function enterSelectMode(row) {
   bar.id = 'selectConfirmBar';
   bar.innerHTML = `
     <span class="sc-count">已选 <strong id="scCount">0</strong> 段</span>
-    <span class="sc-hint">点击段落选择要订阅的内容</span>
+    <button class="sc-btn select-all" id="scSelectAllBtn" onclick="toggleSelectAllParagraphs()" title="选中当前回答的所有段落">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span id="scSelectAllText">全选段落</span>
+    </button>
+    <button class="sc-btn ai-pick" onclick="aiPickParagraphs()" title="让 Agent 自动挑选核心结论段落">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+      AI 一键精选
+    </button>
+    <span class="sc-spacer"></span>
     <button class="sc-btn cancel" onclick="exitSelectMode()">取消</button>
     <button class="sc-btn confirm" id="scConfirmBtn" onclick="confirmSelected()" disabled>确认订阅</button>
   `;
@@ -2750,8 +2970,33 @@ function enterSelectMode(row) {
   bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+// AI 一键精选：把整条回答作为内容快照传入订阅弹窗，
+// 订阅标记为 contentMode='ai-summary'，实际推送时后端调 Agent 用最新数据重新总结重点。
+// 用户看不到"选了哪几段"的视觉反馈，只需要知道"每次推送 AI 都会精选重点给我"。
+function aiPickParagraphs() {
+  if (!selectModeRow) return;
+  const paras = selectModeRow.querySelectorAll('.msg-bubble p');
+  const html = Array.from(paras).map(p => p.outerHTML).join('');
+  const row = selectModeRow;
+  exitSelectMode();
+  openSubModal(html, undefined, { source: 'user', contentMode: 'ai-summary' });
+}
+
 function toggleParagraph(p) {
   p.classList.toggle('selected');
+  updateSelectBar();
+}
+
+// 全选 / 取消全选段落
+function toggleSelectAllParagraphs() {
+  if (!selectModeRow) return;
+  const paras = selectModeRow.querySelectorAll('.msg-bubble p');
+  if (paras.length === 0) return;
+  const allSelected = Array.from(paras).every(p => p.classList.contains('selected'));
+  paras.forEach(p => {
+    if (allSelected) p.classList.remove('selected');
+    else p.classList.add('selected');
+  });
   updateSelectBar();
 }
 
@@ -2759,12 +3004,16 @@ function updateSelectBar() {
   if (!selectModeRow) return;
   const bar = document.getElementById('selectConfirmBar');
   if (!bar) return;
+  const paras = selectModeRow.querySelectorAll('.msg-bubble p');
   const selected = selectModeRow.querySelectorAll('.msg-bubble p.selected');
   const count = selected.length;
+  const total = paras.length;
   const countEl = bar.querySelector('#scCount');
   const btn = bar.querySelector('#scConfirmBtn');
   if (countEl) countEl.textContent = count;
   if (btn) btn.disabled = count === 0;
+  const selectAllText = bar.querySelector('#scSelectAllText');
+  if (selectAllText) selectAllText.textContent = (count === total && total > 0) ? '取消全选' : '全选段落';
 }
 
 function exitSelectMode() {
@@ -2825,6 +3074,35 @@ function selectFreq(freq) {
   weekday.style.display = freq === 'weekly' ? 'block' : 'none';
   monthday.style.display = freq === 'monthly' ? 'block' : 'none';
   updateCreditsHint();
+}
+
+// ====== 推送渠道多选 ======
+function toggleChannel(name) {
+  if (name === 'email') {
+    const checked = document.getElementById('subChannelEmailCheck').checked;
+    document.getElementById('subChannelEmailInputWrap').style.display = checked ? '' : 'none';
+  }
+}
+function getSelectedChannels() {
+  const channels = [];
+  if (document.getElementById('subChannelFeishuCheck').checked) channels.push('feishu');
+  if (document.getElementById('subChannelEmailCheck').checked) channels.push('email');
+  return channels;
+}
+function getEmailRecipients() {
+  const raw = (document.getElementById('subChannelEmailInput').value || '').trim();
+  if (!raw) return [];
+  return raw.split(/[,，\s]+/).map(s => s.trim()).filter(Boolean);
+}
+function setChannelsUI(channels, emails) {
+  const feishu = channels ? channels.includes('feishu') : true;
+  const email  = channels ? channels.includes('email')  : false;
+  document.getElementById('subChannelFeishuCheck').checked = feishu;
+  document.getElementById('subChannelEmailCheck').checked = email;
+  document.getElementById('subChannelEmailInputWrap').style.display = email ? '' : 'none';
+  document.getElementById('subChannelEmailInput').value = (emails && emails.length)
+    ? emails.join(', ')
+    : 'martin.wei@tec-do.com';
 }
 
 // ====== 积分预估提示 ======
@@ -3001,18 +3279,26 @@ function openSubModal(contentText, meta, ctx) {
   subCurrentContent = contentText || '';
   subCurrentContext = Object.assign({ source: 'user' }, ctx || {});
   const isOfficial = subCurrentContext.source === 'official';
+  const isAiSummary = subCurrentContext.contentMode === 'ai-summary';
 
   // 生成或使用传入的分析逻辑摘要
   const m = meta || generateAnalysisMeta(contentText);
   renderAnalysisMeta(m);
 
-  // 渲染"首次分析结果"折叠区（仅对用户段落订阅有意义；官方模板每次都用最新数据跑）
+  // AI 一键精选：展示承诺卡；否则渲染"首次分析结果"折叠区
+  const aiNote = document.getElementById('subAiSummaryNote');
   const lastResultEl = document.getElementById('subLastResult');
   const lastContentEl = document.getElementById('subLastResultContent');
-  const plainText = (contentText || '').replace(/<[^>]+>/g, '');
-  const paragraphs = plainText.split(/\n+/).filter(s => s.trim());
-  lastContentEl.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
-  lastResultEl.style.display = (paragraphs.length && !isOfficial) ? '' : 'none';
+  if (isAiSummary) {
+    if (aiNote) aiNote.style.display = '';
+    if (lastResultEl) lastResultEl.style.display = 'none';
+  } else {
+    if (aiNote) aiNote.style.display = 'none';
+    const plainText = (contentText || '').replace(/<[^>]+>/g, '');
+    const paragraphs = plainText.split(/\n+/).filter(s => s.trim());
+    lastContentEl.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+    lastResultEl.style.display = (paragraphs.length && !isOfficial) ? '' : 'none';
+  }
 
   // 隐藏「段落编辑」区（新建订阅不需要）
   const editWrap = document.getElementById('subEditParagraphs');
@@ -3023,6 +3309,7 @@ function openSubModal(contentText, meta, ctx) {
   nameInput.value = subCurrentContext.name || m.topic || '';
   document.getElementById('subTimeInput').value = subCurrentContext.defaultTime || '09:00';
   selectFreq(subCurrentContext.defaultFreq || 'daily');
+  setChannelsUI(['feishu'], null);   // 新建订阅默认只勾飞书
   updateCreditsHint();
 
   // 重置确认按钮
@@ -3040,6 +3327,9 @@ function closeSubModal() {
   // 关闭编辑段落区
   const editWrap = document.getElementById('subEditParagraphs');
   if (editWrap) editWrap.style.display = 'none';
+  // 隐藏 AI 一键精选承诺卡
+  const aiNote = document.getElementById('subAiSummaryNote');
+  if (aiNote) aiNote.style.display = 'none';
 }
 
 function generateAnalysisMeta(contentHtml) {
@@ -3100,6 +3390,13 @@ function toggleLastResult(btn) {
   body.classList.toggle('open');
 }
 
+function channelsLabel(channels) {
+  const arr = [];
+  if (channels.includes('feishu')) arr.push('飞书');
+  if (channels.includes('email'))  arr.push('邮箱');
+  return arr.join(' + ') || '飞书';
+}
+
 function confirmSubscribe() {
   const ctx = subCurrentContext || { source: 'user' };
   const isOfficial = ctx.source === 'official';
@@ -3108,18 +3405,30 @@ function confirmSubscribe() {
   const time = document.getElementById('subTimeInput').value || '09:00';
   const weekday = parseInt(document.getElementById('subWeekdaySelect').value);
   const monthday = parseInt(document.getElementById('subMonthdaySelect').value) || 1;
-  // 官方模板：直接用模板的 meta；用户段落订阅：从内容识别
+  const channels = getSelectedChannels();
+  if (channels.length === 0) {
+    showToast('请至少选择一个推送渠道');
+    return;
+  }
+  const emails = channels.includes('email') ? getEmailRecipients() : [];
+  if (channels.includes('email') && emails.length === 0) {
+    showToast('请填写邮箱收件人');
+    return;
+  }
   const meta = tpl ? tpl.meta : generateAnalysisMeta(subCurrentContent);
   const sub = {
     id: Date.now(),
-    source: ctx.source,                    // 'official' | 'user'
-    templateId: ctx.templateId || null,    // 仅官方订阅
+    source: ctx.source,
+    templateId: ctx.templateId || null,
+    contentMode: ctx.contentMode || 'manual',   // 'manual' 用户选段 | 'ai-summary' AI 一键精选
     name,
     freq: currentFreq,
     time,
     weekday,
     monthday,
-    content: isOfficial ? '' : subCurrentContent,  // 官方模板每次跑最新数据，不存快照
+    channels,
+    emails,
+    content: isOfficial ? '' : subCurrentContent,
     meta,
     enabled: true,
     createdAt: new Date().toLocaleDateString('zh-CN')
@@ -3127,7 +3436,7 @@ function confirmSubscribe() {
   subscriptions.unshift(sub);
   saveSubscriptions();
   closeSubModal();
-  showToast('订阅成功！将于' + getFreqLabel(sub) + ' 推送到飞书', true);
+  showToast('订阅成功！将于' + getFreqLabel(sub) + ' 推送到 ' + channelsLabel(channels), true);
 }
 
 function openSubPanel() {
@@ -3160,10 +3469,10 @@ function renderSubItem(sub) {
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
           ${getFreqLabel(sub)}
         </span>
-        <span class="sub-item-tag">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="4" rx="0.5"/><rect x="10" y="3" width="4" height="4" rx="0.5"/><rect x="3" y="10" width="4" height="4" rx="0.5"/><rect x="10" y="10" width="4" height="4" rx="0.5"/></svg>
-          飞书
-        </span>
+        ${(sub.channels || ['feishu']).map(ch => ch === 'email'
+          ? '<span class="sub-item-tag"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>邮箱</span>'
+          : '<span class="sub-item-tag"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="4" rx="0.5"/><rect x="10" y="3" width="4" height="4" rx="0.5"/><rect x="3" y="10" width="4" height="4" rx="0.5"/><rect x="10" y="10" width="4" height="4" rx="0.5"/></svg>飞书</span>'
+        ).join('')}
         <span class="sub-item-tag sub-item-tag--credits" title="每次推送消耗 ${CREDITS_PER_PUSH} 积分">
           ≈ ${CREDITS_PER_PUSH} 积分/次
         </span>
@@ -3274,17 +3583,34 @@ function editSub(id) {
   initMonthdaySelect();
   closeSubPanel();
   subCurrentContent = sub.content || '';
+  subCurrentContext = { source: sub.source || 'user', templateId: sub.templateId || null, contentMode: sub.contentMode || 'manual' };
+  const isOfficial = subCurrentContext.source === 'official';
+  const isAiSummary = subCurrentContext.contentMode === 'ai-summary';
 
-  // 渲染分析逻辑摘要（用已有 meta 或重新生成）
   const meta = sub.meta || generateAnalysisMeta(sub.content);
   renderAnalysisMeta(meta);
 
-  // 编辑模式：隐藏「首次分析结果」折叠区，改用可编辑的段落卡片
+  // 隐藏"首次分析结果"折叠区（编辑态永远不展示只读预览）
   const lastResultEl = document.getElementById('subLastResult');
   if (lastResultEl) lastResultEl.style.display = 'none';
 
-  const paragraphs = splitSubContentToParagraphs(sub.content);
-  renderEditParagraphs(paragraphs);
+  const aiNote = document.getElementById('subAiSummaryNote');
+  const editWrap = document.getElementById('subEditParagraphs');
+
+  if (isOfficial) {
+    // 官方模板：既没有段落也没有 AI 精选卡
+    if (aiNote) aiNote.style.display = 'none';
+    if (editWrap) editWrap.style.display = 'none';
+  } else if (isAiSummary) {
+    // AI 一键精选订阅：只展示承诺卡，不展示段落编辑
+    if (aiNote) aiNote.style.display = '';
+    if (editWrap) editWrap.style.display = 'none';
+  } else {
+    // 手动选段订阅：展示段落编辑卡片，允许增删
+    if (aiNote) aiNote.style.display = 'none';
+    const paragraphs = splitSubContentToParagraphs(sub.content);
+    renderEditParagraphs(paragraphs);
+  }
 
   document.getElementById('subNameInput').value = sub.name;
   document.getElementById('subTimeInput').value = sub.time || '09:00';
@@ -3292,20 +3618,32 @@ function editSub(id) {
   if (sub.freq === 'weekly') document.getElementById('subWeekdaySelect').value = sub.weekday ?? 1;
   if (sub.freq === 'monthly') document.getElementById('subMonthdaySelect').value = sub.monthday ?? 1;
 
+  // 回填渠道
+  setChannelsUI(sub.channels || ['feishu'], sub.emails || []);
+
   document.querySelector('#subModal .sub-btn.primary').onclick = function() {
+    const channels = getSelectedChannels();
+    if (channels.length === 0) { showToast('请至少选择一个推送渠道'); return; }
+    const emails = channels.includes('email') ? getEmailRecipients() : [];
+    if (channels.includes('email') && emails.length === 0) { showToast('请填写邮箱收件人'); return; }
+
     sub.name = document.getElementById('subNameInput').value.trim() || sub.name;
     sub.freq = currentFreq;
     sub.time = document.getElementById('subTimeInput').value || sub.time;
     sub.weekday = parseInt(document.getElementById('subWeekdaySelect').value);
     sub.monthday = parseInt(document.getElementById('subMonthdaySelect').value) || 1;
+    sub.channels = channels;
+    sub.emails = emails;
     sub.meta = meta;
 
-    // 收集未移除段落 → 重组 content
-    const kept = Array.from(document.querySelectorAll('#subEditParagraphsList .sub-edit-paragraph-card:not(.removed)'))
-      .map(el => el.innerHTML.trim())
-      .filter(Boolean);
-    if (kept.length) {
-      sub.content = kept.map(h => (/<p[\s>]/i.test(h) ? h : `<p>${h}</p>`)).join('');
+    // 手动选段订阅：收集未移除段落 → 重组 content
+    if (!isOfficial && !isAiSummary) {
+      const kept = Array.from(document.querySelectorAll('#subEditParagraphsList .sub-edit-paragraph-card:not(.removed)'))
+        .map(el => el.innerHTML.trim())
+        .filter(Boolean);
+      if (kept.length) {
+        sub.content = kept.map(h => (/<p[\s>]/i.test(h) ? h : `<p>${h}</p>`)).join('');
+      }
     }
 
     saveSubscriptions();
