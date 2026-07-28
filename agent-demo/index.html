@@ -1415,17 +1415,21 @@ body {
 .sub-modal {
   background: white;
   border-radius: 16px;
-  padding: 28px;
+  padding: 22px 24px 20px;
   width: 460px;
   max-width: 94vw;
+  max-height: 88vh;
+  overflow-y: auto;
   box-shadow: 0 24px 64px rgba(0,0,0,0.2);
   animation: modalIn 0.25s ease;
 }
+.sub-modal::-webkit-scrollbar { width: 6px; }
+.sub-modal::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 3px; }
 .sub-modal-header {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 .sub-modal-icon {
   width: 40px;
@@ -1439,7 +1443,7 @@ body {
 }
 .sub-modal-title { font-size: 17px; font-weight: 700; color: #111827; margin-bottom: 3px; }
 .sub-modal-subtitle { font-size: 12.5px; color: #6b7280; line-height: 1.5; }
-.sub-field { margin-bottom: 16px; }
+.sub-field { margin-bottom: 12px; }
 .sub-field label {
   display: block;
   font-size: 12px;
@@ -1462,36 +1466,25 @@ body {
 .sub-field input:focus,
 .sub-field select:focus { border-color: #374151; }
 
-/* 分析逻辑摘要区 */
+/* 分析逻辑摘要区（精简：一行摘要 + 可展开详情） */
 .sub-analysis-meta {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
 }
-.sub-meta-row {
+.sub-meta-summary {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 12.5px;
-}
-.sub-meta-row:last-child { margin-bottom: 0; }
-.sub-meta-label {
-  color: #9ca3af;
-  white-space: nowrap;
-  flex-shrink: 0;
-  padding-top: 1px;
-  width: 52px;
-}
-.sub-meta-value {
-  color: #1f2937;
-  line-height: 1.5;
-  display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #1f2937;
 }
+.sub-meta-topic { font-weight: 600; color: #111827; }
+.sub-meta-dot { color: #d1d5db; margin: 0 2px; }
+.sub-meta-tw { color: #6b7280; }
 .sub-meta-tag {
   display: inline-flex;
   align-items: center;
@@ -1499,7 +1492,7 @@ body {
   color: #374151;
   padding: 1px 8px;
   border-radius: 20px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 500;
 }
 .sub-meta-tag.anomaly {
@@ -1507,10 +1500,41 @@ body {
   border: 1px solid #fcd34d;
   color: #92400e;
 }
-.sub-meta-hint {
-  font-size: 11px;
+.sub-meta-more {
+  margin-left: auto;
+  background: none;
+  border: none;
   color: #9ca3af;
-  margin-left: 4px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  transition: color 0.15s;
+}
+.sub-meta-more:hover { color: #4b5563; }
+.sub-meta-more svg { transition: transform 0.2s; }
+.sub-meta-more.open svg { transform: rotate(180deg); }
+.sub-meta-detail {
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sub-meta-row-sm {
+  display: flex;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #4b5563;
+}
+.sub-meta-row-sm .sub-meta-label {
+  color: #9ca3af;
+  width: 60px;
+  flex-shrink: 0;
 }
 
 /* 编辑订阅：段落卡片可增删 */
@@ -1601,7 +1625,89 @@ body {
   color: #b45309;
 }
 
-/* AI 一键精选：承诺卡 */
+/* 推送内容形式：两卡单选（水平并排） */
+.sub-content-mode-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.sub-content-mode-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  min-width: 0;
+}
+.sub-content-mode-card:hover { border-color: #d1d5db; background: #fafafa; }
+.sub-content-mode-card.active {
+  border-color: #4338ca;
+  background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+}
+.sub-content-mode-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.sub-cm-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.sub-content-mode-card.active .sub-cm-icon {
+  background: #ffffff;
+  color: #4338ca;
+  box-shadow: 0 1px 3px rgba(67,56,202,0.12);
+}
+.sub-cm-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sub-cm-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.sub-cm-badge {
+  font-size: 9.5px;
+  font-weight: 500;
+  padding: 0 4px;
+  background: #4338ca;
+  color: #ffffff;
+  border-radius: 3px;
+  line-height: 1.6;
+}
+.sub-content-mode-card.active .sub-cm-title { color: #3730a3; }
+.sub-cm-desc {
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* AI 一键精选：承诺卡（已被两卡单选取代，保留兼容） */
 .sub-ai-summary-note {
   display: flex;
   align-items: flex-start;
@@ -1687,15 +1793,15 @@ body {
 /* 频率 Tab */
 .sub-freq-tabs {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   background: #f3f4f6;
-  padding: 4px;
-  border-radius: 9px;
-  margin-bottom: 10px;
+  padding: 3px;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 .sub-freq-tab {
   flex: 1;
-  height: 32px;
+  height: 28px;
   border: none;
   background: transparent;
   border-radius: 6px;
@@ -1734,16 +1840,16 @@ body {
 .sub-channel-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .sub-channel-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: #ffffff;
   border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -1760,15 +1866,19 @@ body {
   font-weight: 600;
 }
 .sub-channel-item .sub-channel-icon {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   background: #f3f4f6;
-  border-radius: 8px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
+.sub-channel-item .sub-channel-icon svg { width: 13px; height: 13px; }
+.sub-channel-item .sub-channel-info { gap: 1px; }
+.sub-channel-item .sub-channel-name { font-size: 12.5px; }
+.sub-channel-item .sub-channel-target { font-size: 11px; }
 .sub-channel-item .sub-channel-info {
   flex: 1;
   min-width: 0;
@@ -1842,12 +1952,12 @@ body {
   white-space: nowrap;
 }
 .sub-channel-target strong { color: #111827; }
-/* 积分消耗提示 */
+/* 积分消耗提示（压缩到一行） */
 .sub-credits-hint {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 8px;
+  padding: 8px 10px;
   margin-bottom: 12px;
 }
 .sub-credits-hint.warn {
@@ -1880,9 +1990,9 @@ body {
   background: #fef3c7;
 }
 .sub-credits-note {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #9ca3af;
-  margin-top: 4px;
+  margin-top: 3px;
   padding-left: 18px;
 }
 
@@ -2294,14 +2404,30 @@ body {
       <div class="sub-edit-paragraphs-hint" id="subEditParagraphsHint"></div>
     </div>
 
-    <!-- AI 一键精选：承诺卡（点击 AI 一键精选进入订阅时才展示） -->
-    <div class="sub-ai-summary-note" id="subAiSummaryNote" style="display:none;">
-      <div class="sub-ai-summary-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
-      </div>
-      <div class="sub-ai-summary-text">
-        <div class="sub-ai-summary-title">AI 一键精选</div>
-        <div class="sub-ai-summary-desc">每次推送时，Agent 会自动为你精炼出重点结论和建议动作</div>
+    <!-- 推送内容形式：AI 精选 / 完整回答 二选一 -->
+    <div class="sub-field sub-content-mode-field" id="subContentModeField" style="display:none;">
+      <label>推送内容</label>
+      <div class="sub-content-mode-list">
+        <label class="sub-content-mode-card active" data-mode="ai-summary">
+          <input type="radio" name="subContentMode" value="ai-summary" checked onchange="selectContentMode('ai-summary')">
+          <span class="sub-cm-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+          </span>
+          <span class="sub-cm-body">
+            <span class="sub-cm-title">AI 精选重点<span class="sub-cm-badge">推荐</span></span>
+            <span class="sub-cm-desc">Agent 每次推送时自动精炼重点结论和建议动作</span>
+          </span>
+        </label>
+        <label class="sub-content-mode-card" data-mode="full-html">
+          <input type="radio" name="subContentMode" value="full-html" onchange="selectContentMode('full-html')">
+          <span class="sub-cm-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </span>
+          <span class="sub-cm-body">
+            <span class="sub-cm-title">完整回答</span>
+            <span class="sub-cm-desc">推送 Agent 完整分析全文（HTML 格式）</span>
+          </span>
+        </label>
       </div>
     </div>
 
@@ -2380,7 +2506,7 @@ body {
         <span>预计每次推送消耗 <strong>15 积分</strong> · <span id="subCreditsPeriod">按每日推送计算，本月约 450 积分</span></span>
         <span class="sub-credits-balance" id="subCreditsBalance">余额 8,320</span>
       </div>
-      <div class="sub-credits-note">余额不足时自动跳过推送并通知你</div>
+      <div class="sub-credits-note" title="余额不足时自动跳过推送并通知你">余额不足自动跳过推送</div>
     </div>
     <div class="sub-modal-actions">
       <button class="sub-btn secondary" onclick="closeSubModal()">取消</button>
@@ -2581,9 +2707,9 @@ function typeAgentReply(row, html) {
     if (idx >= parts.length) {
       timeEl.textContent = timeStr;
       meta.style.display = 'flex';
-      // 绑定订阅按钮：进入选段模式（在 chat 页面就选好要推送的内容）
+      // 绑定订阅按钮：把 Agent 整条回答作为快照传入订阅弹窗（推送内容形式在弹窗里选）
       const subBtn = row.querySelector('.msg-subscribe-btn');
-      if (subBtn) subBtn.onclick = () => enterSelectMode(row);
+      if (subBtn) subBtn.onclick = () => subscribeWithAiSummary(row);
       scrollChatToBottom();
       return;
     }
@@ -2922,6 +3048,13 @@ function subscribeFromMessage(row) {
   openSubModal(html, undefined, { source: 'user' });
 }
 
+// 从消息触发订阅（走 AI 一键精选：Agent 整条回答作为上下文，推送时后端每次重新总结重点）
+function subscribeWithAiSummary(row) {
+  const paras = row.querySelectorAll('.msg-bubble p');
+  const html = Array.from(paras).map(p => p.outerHTML).join('');
+  openSubModal(html, undefined, { source: 'user', contentMode: 'ai-summary' });
+}
+
 let selectModeRow = null;
 
 function enterSelectMode(row) {
@@ -3074,6 +3207,21 @@ function selectFreq(freq) {
   weekday.style.display = freq === 'weekly' ? 'block' : 'none';
   monthday.style.display = freq === 'monthly' ? 'block' : 'none';
   updateCreditsHint();
+}
+
+// ====== 推送内容形式：AI 精选 / 完整回答 ======
+function selectContentMode(mode) {
+  document.querySelectorAll('.sub-content-mode-card').forEach(card => {
+    const on = card.dataset.mode === mode;
+    card.classList.toggle('active', on);
+    const radio = card.querySelector('input[type="radio"]');
+    if (radio) radio.checked = on;
+  });
+  if (!subCurrentContext) subCurrentContext = { source: 'user' };
+  subCurrentContext.contentMode = mode;
+  // 任何模式都不展示"首次分析结果"预览（信息冗余，两卡文案已经说清）
+  const lastResultEl = document.getElementById('subLastResult');
+  if (lastResultEl) lastResultEl.style.display = 'none';
 }
 
 // ====== 推送渠道多选 ======
@@ -3279,25 +3427,28 @@ function openSubModal(contentText, meta, ctx) {
   subCurrentContent = contentText || '';
   subCurrentContext = Object.assign({ source: 'user' }, ctx || {});
   const isOfficial = subCurrentContext.source === 'official';
-  const isAiSummary = subCurrentContext.contentMode === 'ai-summary';
 
   // 生成或使用传入的分析逻辑摘要
   const m = meta || generateAnalysisMeta(contentText);
   renderAnalysisMeta(m);
 
-  // AI 一键精选：展示承诺卡；否则渲染"首次分析结果"折叠区
   const aiNote = document.getElementById('subAiSummaryNote');
   const lastResultEl = document.getElementById('subLastResult');
-  const lastContentEl = document.getElementById('subLastResultContent');
-  if (isAiSummary) {
-    if (aiNote) aiNote.style.display = '';
+  const modeField = document.getElementById('subContentModeField');
+
+  // 用户订阅弹窗：展示"推送内容"两卡单选
+  if (isOfficial) {
+    if (modeField) modeField.style.display = 'none';
+    if (aiNote) aiNote.style.display = 'none';
     if (lastResultEl) lastResultEl.style.display = 'none';
   } else {
-    if (aiNote) aiNote.style.display = 'none';
-    const plainText = (contentText || '').replace(/<[^>]+>/g, '');
-    const paragraphs = plainText.split(/\n+/).filter(s => s.trim());
-    lastContentEl.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
-    lastResultEl.style.display = (paragraphs.length && !isOfficial) ? '' : 'none';
+    if (aiNote) aiNote.style.display = 'none';        // 已由两卡单选替代
+    if (modeField) modeField.style.display = '';
+    // 默认选中 AI 精选
+    const defaultMode = subCurrentContext.contentMode || 'ai-summary';
+    selectContentMode(defaultMode);
+    // 完整回答模式下才展示"首次分析结果"折叠区
+    if (lastResultEl) lastResultEl.style.display = 'none';
   }
 
   // 隐藏「段落编辑」区（新建订阅不需要）
@@ -3330,6 +3481,9 @@ function closeSubModal() {
   // 隐藏 AI 一键精选承诺卡
   const aiNote = document.getElementById('subAiSummaryNote');
   if (aiNote) aiNote.style.display = 'none';
+  // 隐藏推送内容形式两卡单选，重置默认
+  const modeField = document.getElementById('subContentModeField');
+  if (modeField) modeField.style.display = 'none';
 }
 
 function generateAnalysisMeta(contentHtml) {
@@ -3358,30 +3512,29 @@ function renderAnalysisMeta(meta) {
   const el = document.getElementById('subAnalysisMeta');
   if (!el) return;
   el.innerHTML = `
-    <div class="sub-meta-row">
-      <span class="sub-meta-label">分析主题</span>
-      <span class="sub-meta-value">${meta.topic || '—'}</span>
+    <div class="sub-meta-summary">
+      <span class="sub-meta-topic">${meta.topic || '—'}</span>
+      <span class="sub-meta-dot">·</span>
+      <span class="sub-meta-tw">${meta.timeWindow || '—'}</span>
+      <span class="sub-meta-tag anomaly" title="每次运行自动筛选涨跌异常的指标">异常指标 自动识别</span>
+      <button class="sub-meta-more" onclick="toggleMetaMore(this)" type="button">
+        更多
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
     </div>
-    <div class="sub-meta-row">
-      <span class="sub-meta-label">数据范围</span>
-      <span class="sub-meta-value">${meta.dataScope || '全账户'}</span>
-    </div>
-    <div class="sub-meta-row">
-      <span class="sub-meta-label">关注指标</span>
-      <span class="sub-meta-value">
-        <span class="sub-meta-tag anomaly">异常指标（自动识别）</span>
-        <span class="sub-meta-hint">每次运行自动筛选涨跌异常的指标</span>
-      </span>
-    </div>
-    <div class="sub-meta-row">
-      <span class="sub-meta-label">分析深度</span>
-      <span class="sub-meta-value">${meta.depth || '—'}</span>
-    </div>
-    <div class="sub-meta-row">
-      <span class="sub-meta-label">时间窗口</span>
-      <span class="sub-meta-value">${meta.timeWindow || '—'}</span>
+    <div class="sub-meta-detail" style="display:none;">
+      <div class="sub-meta-row-sm"><span class="sub-meta-label">数据范围</span><span>${meta.dataScope || '全账户'}</span></div>
+      <div class="sub-meta-row-sm"><span class="sub-meta-label">分析深度</span><span>${meta.depth || '—'}</span></div>
     </div>
   `;
+}
+
+function toggleMetaMore(btn) {
+  const detail = btn.parentElement.nextElementSibling;
+  if (!detail) return;
+  const open = detail.style.display === '';
+  detail.style.display = open ? 'none' : '';
+  btn.classList.toggle('open', !open);
 }
 
 function toggleLastResult(btn) {
@@ -3420,7 +3573,7 @@ function confirmSubscribe() {
     id: Date.now(),
     source: ctx.source,
     templateId: ctx.templateId || null,
-    contentMode: ctx.contentMode || 'manual',   // 'manual' 用户选段 | 'ai-summary' AI 一键精选
+    contentMode: ctx.contentMode || 'ai-summary',  // 'ai-summary' AI 精选重点 | 'full-html' 完整回答
     name,
     freq: currentFreq,
     time,
@@ -3462,7 +3615,10 @@ function renderSubItem(sub) {
       </div>
       <div style="padding:0 2px;margin-bottom:6px;">
         <div style="font-size:11.5px;color:#374151;font-weight:500;margin-bottom:3px;">${meta.topic || sub.name}</div>
-        <div style="font-size:10.5px;color:#9ca3af;">${isOfficial ? '每次推送用最新数据重新分析' : '异常指标（自动识别）'}</div>
+        <div style="font-size:10.5px;color:#9ca3af;">${
+          isOfficial ? '每次推送用最新数据重新分析'
+          : (sub.contentMode === 'full-html' ? '推送 Agent 完整回答（HTML 全文）' : 'AI 精选重点 · 每次自动精炼结论')
+        }</div>
       </div>
       <div class="sub-item-meta">
         <span class="sub-item-tag">
@@ -3583,33 +3739,28 @@ function editSub(id) {
   initMonthdaySelect();
   closeSubPanel();
   subCurrentContent = sub.content || '';
-  subCurrentContext = { source: sub.source || 'user', templateId: sub.templateId || null, contentMode: sub.contentMode || 'manual' };
+  subCurrentContext = { source: sub.source || 'user', templateId: sub.templateId || null, contentMode: sub.contentMode || 'ai-summary' };
   const isOfficial = subCurrentContext.source === 'official';
-  const isAiSummary = subCurrentContext.contentMode === 'ai-summary';
 
   const meta = sub.meta || generateAnalysisMeta(sub.content);
   renderAnalysisMeta(meta);
 
-  // 隐藏"首次分析结果"折叠区（编辑态永远不展示只读预览）
   const lastResultEl = document.getElementById('subLastResult');
   if (lastResultEl) lastResultEl.style.display = 'none';
 
   const aiNote = document.getElementById('subAiSummaryNote');
   const editWrap = document.getElementById('subEditParagraphs');
+  const modeField = document.getElementById('subContentModeField');
+  if (aiNote) aiNote.style.display = 'none';
+  if (editWrap) editWrap.style.display = 'none';
 
   if (isOfficial) {
-    // 官方模板：既没有段落也没有 AI 精选卡
-    if (aiNote) aiNote.style.display = 'none';
-    if (editWrap) editWrap.style.display = 'none';
-  } else if (isAiSummary) {
-    // AI 一键精选订阅：只展示承诺卡，不展示段落编辑
-    if (aiNote) aiNote.style.display = '';
-    if (editWrap) editWrap.style.display = 'none';
+    // 官方模板：不展示"推送内容"两卡（不允许改内容形式）
+    if (modeField) modeField.style.display = 'none';
   } else {
-    // 手动选段订阅：展示段落编辑卡片，允许增删
-    if (aiNote) aiNote.style.display = 'none';
-    const paragraphs = splitSubContentToParagraphs(sub.content);
-    renderEditParagraphs(paragraphs);
+    // 用户订阅：展示两卡单选，回填当前 contentMode
+    if (modeField) modeField.style.display = '';
+    selectContentMode(subCurrentContext.contentMode || 'ai-summary');
   }
 
   document.getElementById('subNameInput').value = sub.name;
@@ -3635,15 +3786,9 @@ function editSub(id) {
     sub.channels = channels;
     sub.emails = emails;
     sub.meta = meta;
-
-    // 手动选段订阅：收集未移除段落 → 重组 content
-    if (!isOfficial && !isAiSummary) {
-      const kept = Array.from(document.querySelectorAll('#subEditParagraphsList .sub-edit-paragraph-card:not(.removed)'))
-        .map(el => el.innerHTML.trim())
-        .filter(Boolean);
-      if (kept.length) {
-        sub.content = kept.map(h => (/<p[\s>]/i.test(h) ? h : `<p>${h}</p>`)).join('');
-      }
+    // 保存推送内容形式（AI 精选 / 完整回答）
+    if (!isOfficial) {
+      sub.contentMode = subCurrentContext.contentMode || 'ai-summary';
     }
 
     saveSubscriptions();
