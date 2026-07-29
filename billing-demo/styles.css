@@ -106,6 +106,14 @@ input, select, textarea { font-family: inherit; }
     height: calc(100vh - 56px);
 }
 
+/* ===== 嵌入模式（作为 iframe 被父页面加载） ===== */
+body.is-embedded .top-bar { display: none; }
+body.is-embedded .main-container { min-height: 100vh; }
+body.is-embedded .sidebar {
+    top: 0;
+    height: 100vh;
+}
+
 .nav-menu {
     display: flex;
     flex-direction: column;
@@ -130,8 +138,8 @@ input, select, textarea { font-family: inherit; }
 }
 
 .nav-item.active {
-    background: #f0fdfa;
-    color: #0d9488;
+    background: #eff6ff;
+    color: #2563eb;
     font-weight: 500;
 }
 
@@ -345,13 +353,13 @@ input, select, textarea { font-family: inherit; }
 }
 
 .btn-link {
-    color: #14b8a6;
+    color: #2563eb;
     padding: 0;
     font-size: 13px;
 }
 
 .btn-link:hover {
-    color: #0d9488;
+    color: #1d4ed8;
     text-decoration: underline;
 }
 
@@ -994,7 +1002,8 @@ textarea.form-input { resize: vertical; min-height: 60px; }
     font-weight: 500;
 }
 
-#billingPage .tab-btn.active {
+/* Billing 页蓝色主题（覆盖默认 teal） */
+.tab-btn.active {
     color: #60a5fa;
     border-bottom-color: #60a5fa;
 }
@@ -1165,33 +1174,79 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 
 .billing-usage-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
     margin-bottom: 24px;
 }
 
 .usage-card {
     background: #fff;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 18px 20px;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.usage-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.usage-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.usage-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    font-size: 10px;
+    line-height: 1;
 }
 
 .usage-card-label {
     font-size: 12px;
     color: #6b7280;
-    margin-bottom: 8px;
+    font-weight: 500;
 }
 
 .usage-card-value {
     font-size: 24px;
     font-weight: 700;
     color: #111827;
-    margin-bottom: 4px;
+    margin-bottom: 10px;
+    line-height: 1.2;
+}
+
+.usage-card-limit {
+    font-size: 14px;
+    font-weight: 500;
+    color: #9ca3af;
+}
+
+.usage-card-bar {
+    height: 4px;
+    background: #f3f4f6;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.usage-card-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease;
 }
 
 .usage-card-hint {
     font-size: 12px;
+    color: #6b7280;
 }
 
 .billing-status {
@@ -1203,13 +1258,26 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 }
 
 .billing-status.status-paid {
-    background: #d1fae5;
-    color: #065f46;
+    background: #f3f4f6;
+    color: #4b5563;
 }
 
 .billing-status.status-pending {
     background: #fef3c7;
     color: #92400e;
+}
+
+/* 账单历史表格外层卡片 */
+.billing-section {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px 20px;
+    overflow: hidden;
+}
+
+.billing-section .data-table {
+    margin: 0;
 }
 
 /* ===== Plan Comparison v2 ===== */
@@ -1595,7 +1663,7 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 .addon-price {
     font-size: 13px;
     font-weight: 600;
-    color: #0d9488;
+    color: #111827;
 }
 
 .addon-action {

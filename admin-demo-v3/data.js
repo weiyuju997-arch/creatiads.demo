@@ -17,12 +17,18 @@ let CURRENT_CONTEXT = { type: 'org', orgId: 1 };
 
 /* ===== 套餐定义（v3 · 精简版 · 4 档 · AI 能力分层） =====
  * 设计原则：
- *   - 4 档主套餐（Free / Pro / Team / Enterprise），USD 计价
+ *   - 4 档主套餐（Starter / Pro / Team / Enterprise），USD 计价
  *   - 分层核心：AI 能力（Chat → 分析 → 执行）+ 是否支持组织
  *   - 无席位限制、无平台限制（对齐用户反馈）
  *   - 按月广告花费分档限制（对标 Madgicx）
  *   - 支持月付 / 年付（年付 -20%）
  *   - Agent 使用按积分计量（不是 token）
+ *
+ * 定价基线（按 Opus 4.8 最好效果 576 积分/份 · Sonnet 5 346 积分/份 估算）：
+ *   套餐    价格   积分     成本    毛利率   单价$/1k   Opus份数   Sonnet份数
+ *   Starter $5    1,200    $3.0    40%     $4.17     2 份       3.5 份
+ *   Pro     $29   7,000    $17.5   40%     $4.14     12 份      20 份
+ *   Team    $129  35,000   $87.5   32%     $3.69     60 份      101 份
  *
  * 积分消耗规则（credits）：
  *   - Chat 简单问答       : 1 积分
@@ -34,11 +40,13 @@ let CURRENT_CONTEXT = { type: 'org', orgId: 1 };
 const SUBSCRIPTION_PLANS = {
     FREE: {
         key: 'FREE',
-        name: 'Free',
-        price: 0,
-        priceYearly: 0,
-        priceUnit: 'Free forever',
-        priceDesc: '个人尝鲜，无需信用卡',
+        name: 'Starter',
+        price: 5,
+        priceYearly: 4,            // -20% 年付月均
+        originalPrice: 9,
+        priceUnit: '$5 / month',
+        priceUnitYearly: '$4 / month（年付）',
+        priceDesc: '个人尝鲜、低成本试水',
         aiLevel: 'AI Chat + 分析',
         limits: {
             hasOrg: false,
@@ -46,14 +54,14 @@ const SUBSCRIPTION_PLANS = {
             maxMembers: -1,        // 席位不限
             platforms: ['*'],      // 平台不限
             monthlyAdSpend: 5000,  // 月广告花费上限 $5K
-            creditsMonthly: 200,
+            creditsMonthly: 1200,
             dataRetentionDays: 90
         },
         highlights: [
-            'AI 深度分析 + 优化建议（200 积分/月）',
+            'AI 深度分析 + 优化建议（1,200 积分/月）',
             '1 个人空间 · 无组织',
             '支持 Meta、Google、TikTok 等平台媒体',
-            '接入广告账户 ≤ 2 个 · 每日同步'
+            '广告账户不限 · 实时同步 <span class="highlight-badge">限免</span>'
         ]
     },
     PRO: {
@@ -72,25 +80,24 @@ const SUBSCRIPTION_PLANS = {
             maxMembers: -1,
             platforms: ['*'],
             monthlyAdSpend: 50000, // 月广告花费上限 $50K
-            creditsMonthly: 2000,
+            creditsMonthly: 7000,
             dataRetentionDays: -1
         },
         highlights: [
-            'AI 深度分析 + 优化建议（2,000 积分/月）',
+            'AI 深度分析 + 优化建议（7,000 积分/月）',
             '3 个工作空间 · 无组织',
             '支持 Meta、Google、TikTok 等平台媒体',
-            '接入广告账户 ≤ 10 个 · 每日同步',
-            'Agent 智能助手：报告订阅'
+            '广告账户不限 · 实时同步 <span class="highlight-badge">限免</span>'
         ]
     },
     TEAM: {
         key: 'TEAM',
         name: 'Team',
-        price: 149,
-        priceYearly: 119,
-        originalPrice: 199,
-        priceUnit: '$149 / month',
-        priceUnitYearly: '$119 / month（年付）',
+        price: 129,
+        priceYearly: 103,
+        originalPrice: 169,
+        priceUnit: '$129 / month',
+        priceUnitYearly: '$103 / month（年付）',
         priceDesc: '成长团队、跨境 DTC、中小 Agency',
         aiLevel: 'AI Chat + 分析 + 执行操作',
         recommended: true,
@@ -100,15 +107,14 @@ const SUBSCRIPTION_PLANS = {
             maxMembers: -1,
             platforms: ['*'],
             monthlyAdSpend: 500000, // 月广告花费上限 $500K
-            creditsMonthly: 10000,
+            creditsMonthly: 35000,
             dataRetentionDays: -1
         },
         highlights: [
-            'AI Agent 执行操作（10,000 积分/月）',
+            'AI Agent 执行操作（35,000 积分/月）',
             '组织 + 10 空间 + 数据权限',
             '支持 Meta、Google、TikTok 等平台媒体',
-            '接入广告账户 ≤ 50 个 · 实时同步',
-            'Agent 智能助手：一句话授权/协作/报告订阅/修改广告预算、竞价'
+            '广告账户不限 · 实时同步 <span class="highlight-badge">限免</span>'
         ]
     },
     ENTERPRISE: {
@@ -134,7 +140,7 @@ const SUBSCRIPTION_PLANS = {
             '定制 Agent + Autopilot（100,000 积分/月起）',
             '组织 + 无限空间 + 数据权限',
             'APP Skill 接入',
-            '接入广告账户不限 · 实时同步 + 专属数据管道',
+            '广告账户不限 · 实时同步',
             '专属客户经理 + 优先技术支持',
             '按需定价（固定月费或按量计费）'
         ]
@@ -217,16 +223,16 @@ const ORG_SUBSCRIPTIONS = [
 /* ===== 账单（USD 计价，对齐出海市场） ===== */
 const BILLING_RECORDS = [
     // 用户订阅账单
-    { id: 1,   scope: 'user', scopeId: 1, plan: 'TEAM',       type: '年付续费',   amount: 1428,  paidAt: '2025-09-01', method: 'Stripe (Visa)', invoice: 'INV-2025-09-001', status: 'paid' },
-    { id: 2,   scope: 'user', scopeId: 1, plan: 'TEAM',       type: '初次订阅',   amount: 1428,  paidAt: '2024-09-01', method: 'Stripe (Visa)', invoice: 'INV-2024-09-001', status: 'paid' },
-    { id: 10,  scope: 'user', scopeId: 3, plan: 'TEAM',       type: '月付续费',   amount: 149,   paidAt: '2025-08-15', method: 'PayPal',        invoice: 'INV-2025-08-015', status: 'paid' },
+    { id: 1,   scope: 'user', scopeId: 1, plan: 'TEAM',       type: '年付续费',   amount: 1236,  paidAt: '2025-09-01', method: 'Stripe (Visa)', invoice: 'INV-2025-09-001', status: 'paid' },
+    { id: 2,   scope: 'user', scopeId: 1, plan: 'TEAM',       type: '初次订阅',   amount: 1236,  paidAt: '2024-09-01', method: 'Stripe (Visa)', invoice: 'INV-2024-09-001', status: 'paid' },
+    { id: 10,  scope: 'user', scopeId: 3, plan: 'TEAM',       type: '月付续费',   amount: 129,   paidAt: '2025-08-15', method: 'PayPal',        invoice: 'INV-2025-08-015', status: 'paid' },
     { id: 20,  scope: 'user', scopeId: 2, plan: 'PRO',        type: '初次订阅',   amount: 29,    paidAt: '2025-12-01', method: 'Stripe (Card)', invoice: 'INV-2025-12-001', status: 'paid' },
 
     // 组织订阅账单
     { id: 100, scope: 'org',  scopeId: 2, plan: 'PRO',        type: '月付续费',   amount: 29,    paidAt: '2025-08-01', method: 'Stripe (Card)', invoice: 'INV-2025-08-100', status: 'paid' },
     { id: 101, scope: 'org',  scopeId: 2, plan: 'PRO',        type: '初次订阅',   amount: 29,    paidAt: '2024-08-01', method: 'Stripe (Card)', invoice: 'INV-2024-08-100', status: 'paid' },
-    { id: 110, scope: 'org',  scopeId: 3, plan: 'TEAM',       type: '年付续费',   amount: 1428,  paidAt: '2025-09-01', method: 'Wire Transfer', invoice: 'INV-2025-09-110', status: 'paid' },
-    { id: 111, scope: 'org',  scopeId: 3, plan: 'TEAM',       type: '从 PRO 升级', amount: 120,  paidAt: '2024-12-01', method: 'Stripe (Card)', invoice: 'INV-2024-12-111', status: 'paid' },
+    { id: 110, scope: 'org',  scopeId: 3, plan: 'TEAM',       type: '年付续费',   amount: 1236,  paidAt: '2025-09-01', method: 'Wire Transfer', invoice: 'INV-2025-09-110', status: 'paid' },
+    { id: 111, scope: 'org',  scopeId: 3, plan: 'TEAM',       type: '从 PRO 升级', amount: 100,   paidAt: '2024-12-01', method: 'Stripe (Card)', invoice: 'INV-2024-12-111', status: 'paid' },
     { id: 112, scope: 'org',  scopeId: 3, plan: 'PRO',        type: '初次订阅',   amount: 29,    paidAt: '2024-09-01', method: 'Stripe (Card)', invoice: 'INV-2024-09-112', status: 'paid' },
 
     // Enterprise 年度合同 + 月度账单
@@ -398,8 +404,8 @@ const WORKSPACE_RESOURCES = [
  */
 const ORG_USAGE = {
     1: { seats: 23, credits: 42000, creditsLimit: 100000, adSpend: 4800000, adSpendLimit: -1,   workspaces: 5, workspacesLimit: -1 },  // Enterprise (积分合同定制)
-    2: { seats: 3,  credits: 960,   creditsLimit: 2000,  adSpend: 12800,  adSpendLimit: 50000,  workspaces: 1, workspacesLimit: 3  },  // Pro
-    3: { seats: 8,  credits: 3200,  creditsLimit: 10000, adSpend: 128000, adSpendLimit: 500000, workspaces: 3, workspacesLimit: 10 }   // Team
+    2: { seats: 3,  credits: 3200,  creditsLimit: 7000,  adSpend: 12800,  adSpendLimit: 50000,  workspaces: 1, workspacesLimit: 3  },  // Pro
+    3: { seats: 8,  credits: 11200, creditsLimit: 35000, adSpend: 128000, adSpendLimit: 500000, workspaces: 3, workspacesLimit: 10 }   // Team
 };
 
 
